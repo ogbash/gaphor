@@ -103,6 +103,8 @@ class AssociationItem(RelationshipItem, diacanvas.CanvasGroupable, diacanvas.Can
 
         self._tail_xb = diacanvas.shape.Path()
         self._tail_xb.set_line_width(2.0)
+        self._cross = diacanvas.shape.Path()
+        self._cross.set_line_width(2.0)
 
 
     def save(self, save_func):
@@ -225,50 +227,61 @@ class AssociationItem(RelationshipItem, diacanvas.CanvasGroupable, diacanvas.Can
         # get the middle
         x = (p1[0] + p2[0]) / 2.0
         y = (p1[1] + p2[1]) / 2.0
-
-        dy = - h
         w2 = w / 2.0
 
-        if inverted:
-            if p1[0] < p2[0] and p1[1] <= p2[1]:
-                ddx = -w2 + (w2 + 10) * sin_angle + w * cos_angle
-                dlx = -w2 + (w2 + 8 + label_xalign) * sin_angle - 10 * cos_angle
+        if p1[0] < p2[0] and p1[1] <= p2[1]:
+            xx = -w2 * cos_angle
+            yy = h * sin_angle - w2 * sin_angle
+            self._label.set_affine((cos_angle, sin_angle, 0, -sin_angle, cos_angle, 0))
 
-            if p1[0] >= p2[0] and p1[1] < p2[1]:
-                ddx =  w2 - (w2 + 10) * sin_angle + w  * cos_angle
-                dlx = -w2 - (w2 + 8 + label_xalign) * sin_angle - 10 * cos_angle
+        elif p1[0] >= p2[0] and p1[1] < p2[1]:
+            xx = w2 * cos_angle - h * sin_angle
+            yy = -h * sin_angle + w2 * sin_angle
+            self._label.set_affine((-cos_angle, -sin_angle, 0, sin_angle, -cos_angle, 0))
 
-            if p1[0] > p2[0] and p1[1] >= p2[1]:
-                ddx = -w2 - (w2 + 10) * sin_angle
-                dlx = -w2 - (w2 + label_xalign) * sin_angle + 8
+        elif p1[0] >= p2[0] and p1[1] > p2[1]:
+            xx = w2 * cos_angle
+            yy = -h * sin_angle + w2 * sin_angle
+            self._label.set_affine((-cos_angle, -sin_angle, 0, sin_angle, -cos_angle, 0))
 
-            if p1[0] <= p2[0] and p1[1] > p2[1]:
-                ddx =  w2 + (w2 + 10) * sin_angle
-                dlx = -w2 + (w2 + label_xalign) * sin_angle - 8
-        else:
-            if p1[0] < p2[0] and p1[1] <= p2[1]:
-                ddx = -w2 + (w2 + 10) * sin_angle
-                dlx = -w2 + (w2 + label_xalign) * sin_angle + 8
+        elif p1[0] < p2[0] and p1[1] >= p2[1]:
+            xx = -w2 * cos_angle + h * sin_angle
+            yy = h * sin_angle - w2 * sin_angle
+            self._label.set_affine((cos_angle, sin_angle, 0, -sin_angle, cos_angle, 0))
 
-            if p1[0] >= p2[0] and p1[1] < p2[1]:
-                ddx =  w2 - (w2 + 10) * sin_angle
-                dlx = -w2 - (w2 + label_xalign) * sin_angle - 8
+        self._label.set_pos((x + xx, y + yy))
 
-            if p1[0] > p2[0] and p1[1] >= p2[1]:
-                ddx =  w2 + (w2 - 10) * sin_angle
-                dlx = -w2 - (w2 + 16 + label_xalign) * sin_angle - 8
+        b0 = x + xx - 5, y + yy - h - 5, \
+            x + xx + fabs(w * cos_angle) + fabs(h * sin_angle) + 5, \
+            y + yy + fabs(h * cos_angle) + fabs(w * sin_angle) - h + 5
+        if p1[0] < p2[0] and p1[1] > p2[1] or p1[0] > p2[0] and p1[1] < p2[1]:
+            b0 = x + xx - 5, \
+                y + yy - fabs(h * cos_angle) - fabs(w * sin_angle) + fabs(h * sin_angle) - 5, \
+                x + xx + fabs(w * cos_angle) + fabs(h * sin_angle) + 5, \
+                y + yy + fabs(h * sin_angle) + 5
 
-            if p1[0] <= p2[0] and p1[1] > p2[1]:
-                ddx = -w2 - (w2 - 10) * sin_angle
-                dlx = -w2 + (w2 + 16 + label_xalign) * sin_angle + 8
+        assert b0[0] <= b0[2] and b0[1] <= b0[3]
 
-        self._label.set_pos((x + dlx, y + dy))
-        b0 = x + dlx, y + dy, x + dlx + w, y + dy + h
-        b1 = x + dlx, y + dy, x + dlx + w, y + dy + h
+#        self._cross.line(list(move((x, y), ((-4, -4), (4, 4), (4, -4), (-4, 4)))))
+        #self._cross.rectangle((b0[0], b0[1]), (b0[2], b0[3]))
+        #self._cross.set_cyclic(True)
+
+        b1 = b0
         if show_dir:
-            self._dir.line(list(move((x + ddx, y + dy + 8), rotate(angle, points))))
+            if inverted:
+                xx = w2 * cos_angle
+                yy = w2 * sin_angle
+            else:
+                xx = -w2 * cos_angle
+                yy = -w2 * sin_angle
+
+            self._dir.line(list(move((x + xx, y + yy), rotate(angle, points))))
+
             self._dir.set_cyclic(True)
-            b1 = x + ddx - 6, y + dy + 8 - 5, x + ddx + 6, y + dy + 8 + 5
+            b1 = x + xx - 8, y + yy - 7, x + xx + 8, y + yy + 7
+            assert b1[0] <= b1[2] and b1[1] <= b1[3]
+            #self._cross.rectangle((b1[0], b1[1]), (b1[2], b1[3]))
+            #self._cross.set_cyclic(True)
 
         return b0, b1
 
@@ -357,6 +370,7 @@ class AssociationItem(RelationshipItem, diacanvas.CanvasGroupable, diacanvas.Can
                     and self._tail_end.get_navigability() == False:
                 yield self._tail_xa
                 yield self._tail_xb
+        yield self._cross
 
     # Gaphor Connection Protocol
 
