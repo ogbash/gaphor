@@ -199,53 +199,79 @@ class AssociationItem(RelationshipItem, diacanvas.CanvasGroupable, diacanvas.Can
     def on_subject_notify__memberEnd(self, subject, pspec):
         self.request_update()
 
-    def update_label(self, p1, p2):
-        """Update the name label near the middle of the association.
-        """
-        w, h = self._label.to_pango_layout(True).get_pixel_size()
-
-        x = (p1[0] + p2[0] - w) / 2.0
-        y = (p1[1] + p2[1] - h) / 2.0 - 10
-
-        self._label.set_pos((x, y))
-        #log.debug('label pos = (%d, %d)' % (x, y))
-        #return x, y, max(x + 10, x + w), max(y + 10, y + h)
-        return x, y, x + w, y + h
-
-
-    def update_dir(self, p1, p2):
+    def update_dir_and_label(self, p1, p2):
         """Create a small arrow near the middle of the association line and
         let it point in the direction of self.subject.memberEnd[0].
         Keep in mind that self.subject.memberEnd[0].class_ points to the class
         *not* pointed to by the arrow.
         """
+        inverted = False
+        show_dir = False
+        label_xalign = 0
+        if self._show_direction and self.subject and self.subject.memberEnd:
+            show_dir = True
+            label_xalign = 10
+            points = ((-6, 0), (6, -5), (6, 5))
+            # If member ends are inverted then invert direction
+            if self.subject.memberEnd[0] is self._tail_end.subject:
+                inverted = True
+                points = flip(points)
+
         w, h = self._label.to_pango_layout(True).get_pixel_size()
 
+        angle = get_angle(p1, p2, 0)
+        sin_angle, cos_angle = angle[1:]
+
+        # get the middle
         x = (p1[0] + p2[0]) / 2.0
-        y = (p1[1] + p2[1]) / 2.0 - 10
+        y = (p1[1] + p2[1]) / 2.0
 
-        w = w / 2.0 + 10
-        
-        # If member ends are inverted then invert angle
-        # and put direction triangle on other side of label
-        if self.subject.memberEnd[0] is self._tail_end.subject:
-            angle = pi
-            if p1[0] > p2[0]: w = -w
+        dy = - h
+        w2 = w / 2.0
+
+        if inverted:
+            if p1[0] < p2[0] and p1[1] <= p2[1]:
+                ddx = -w2 + (w2 + 10) * sin_angle + w * cos_angle
+                dlx = -w2 + (w2 + 8 + label_xalign) * sin_angle - 10 * cos_angle
+
+            if p1[0] >= p2[0] and p1[1] < p2[1]:
+                ddx =  w2 - (w2 + 10) * sin_angle + w  * cos_angle
+                dlx = -w2 - (w2 + 8 + label_xalign) * sin_angle - 10 * cos_angle
+
+            if p1[0] > p2[0] and p1[1] >= p2[1]:
+                ddx = -w2 - (w2 + 10) * sin_angle
+                dlx = -w2 - (w2 + label_xalign) * sin_angle + 8
+
+            if p1[0] <= p2[0] and p1[1] > p2[1]:
+                ddx =  w2 + (w2 + 10) * sin_angle
+                dlx = -w2 + (w2 + label_xalign) * sin_angle - 8
         else:
-            angle = 0
-            if p1[0] < p2[0]: w = -w
+            if p1[0] < p2[0] and p1[1] <= p2[1]:
+                ddx = -w2 + (w2 + 10) * sin_angle
+                dlx = -w2 + (w2 + label_xalign) * sin_angle + 8
 
-        # align to association name
-        x += w
+            if p1[0] >= p2[0] and p1[1] < p2[1]:
+                ddx =  w2 - (w2 + 10) * sin_angle
+                dlx = -w2 - (w2 + label_xalign) * sin_angle - 8
 
-        # move the second point so direction triangle is parallel to line
-        # p1, p2 
-        p2 = p2[0] + w, p2[1] - 10
+            if p1[0] > p2[0] and p1[1] >= p2[1]:
+                ddx =  w2 + (w2 - 10) * sin_angle
+                dlx = -w2 - (w2 + 16 + label_xalign) * sin_angle - 8
 
-        self._dir.line(rotate((x, y), p2, ((-6, 0), (6, -5), (6, 5)), 0, 0, angle))
-        self._dir.set_cyclic(True)
+            if p1[0] <= p2[0] and p1[1] > p2[1]:
+                ddx = -w2 - (w2 - 10) * sin_angle
+                dlx = -w2 + (w2 + 16 + label_xalign) * sin_angle + 8
 
-        return x, y, x + 12, y + 10
+        self._label.set_pos((x + dlx, y + dy))
+        b0 = x + dlx, y + dy, x + dlx + w, y + dy + h
+        b1 = x + dlx, y + dy, x + dlx + w, y + dy + h
+        if show_dir:
+            self._dir.line(list(move((x + ddx, y + dy + 8), rotate(angle, points))))
+            self._dir.set_cyclic(True)
+            b1 = x + ddx - 6, y + dy + 8 - 5, x + ddx + 6, y + dy + 8 + 5
+
+        return b0, b1
+
 
 
     def on_update(self, affine):
@@ -301,21 +327,17 @@ class AssociationItem(RelationshipItem, diacanvas.CanvasGroupable, diacanvas.Can
         self.update_child(self._head_end, affine)
         self.update_child(self._tail_end, affine)
 
-        # update name label:
         middle = len(handles)/2
-        self._label_bounds = self.update_label(handles[middle-1].get_pos_i(),
-                                               handles[middle].get_pos_i())
 
-        if self._show_direction and self.subject and self.subject.memberEnd:
-            b0 = self.update_dir(handles[middle-1].get_pos_i(), handles[middle].get_pos_i())
-        else:
-            b0 = self.bounds
+        # update direction triangle and association name
+        # association name and direction triangle bounds are returned
+        b0, b1 = self.update_dir_and_label(handles[middle-1].get_pos_i(), handles[middle].get_pos_i())
 
         # bounds calculation
-        b1 = self.bounds
-        b2 = self._head_end.get_bounds(self._head_end.affine)
-        b3 = self._tail_end.get_bounds(self._tail_end.affine)
-        bv = zip(self._label_bounds, b0, b1, b2, b3)
+        b2 = self.bounds
+        b3 = self._head_end.get_bounds(self._head_end.affine)
+        b4 = self._tail_end.get_bounds(self._tail_end.affine)
+        bv = zip(b0, b1, b2, b3, b4)
         self.set_bounds((min(bv[0]), min(bv[1]), max(bv[2]), max(bv[3])))
                     
     def on_shape_iter(self):
@@ -865,13 +887,10 @@ class AssociationEnd(diacanvas.CanvasItem, diacanvas.CanvasEditable, DiagramItem
             #self.set_text()
             #log.info('editing done')
 
-
-def rotate(p1, p2, points, x0 = 0, y0 = 0, dangle = 0):
+def get_angle(p1, p2, dangle = 0):
     """
-    Rotate points around p1 (origin of path determined by points is in (0, 0).
-    Rotation angle is determined by line (p0, p1).
-    Points are moved by vector (x0, y0) before rotation and by vector
-    p1 after rotation.
+    Angle is determined by line (p0, p1).
+    Tuple is returned (angle, sin(angle), cos(angle)).
     """
     try:
         angle = atan((p1[1] - p2[1]) / (p1[0] - p2[0]))
@@ -888,23 +907,45 @@ def rotate(p1, p2, points, x0 = 0, y0 = 0, dangle = 0):
 
     sin_angle = sin(angle)
     cos_angle = cos(angle)
+    return (angle, sin_angle, cos_angle)
 
-    def r(a, b, x, y):
-        a += x0
-        b += y0
-        return (cos_angle * a - sin_angle * b + x,
-                sin_angle * a + cos_angle * b + y)
 
-    return [ r(x, y, p1[0], p1[1]) for x, y in points ]
+def rotate(angle, points, (x0, y0) = (0, 0)):
+    """
+    Rotate points around (0, 0) origin.
+    Points are moved by vector (x0, y0) before rotation.
+    """
+    angle, sin_angle, cos_angle = angle
+
+    def r(a, b):
+        return (cos_angle * a - sin_angle * b,
+                sin_angle * a + cos_angle * b)
+
+    return (r(x + x0, y + y0) for x, y in points)
+
+
+def move((x0, y0), points):
+    """
+    Move points by vector (x0, y0).
+    """
+    return ((x + x0, y + y0) for x, y in points)
+
+
+def flip(points):
+    """
+    Flip points horizontaly and vertically around (0, 0).
+    """
+    return ((-x, -y) for x, y in points)
 
 
 def xs(self, p1, p2, name):
     """
     Utility function to draw xs (unknown navigability).
     """
-    points = rotate(p1, p2, ((-4, -4), (4, 4), (4, -4), (-4, 4)), x0 = 10)
-    getattr(self, '_%s_xa' % name).line(points[0:2])
-    getattr(self, '_%s_xb' % name).line(points[2:])
+    points = move(p1, rotate(get_angle(p1, p2), ((-4, -4), (4, 4), (4, -4), (-4, 4)), (10, 0)))
+    getattr(self, '_%s_xa' % name).line((points.next(), points.next()))
+    getattr(self, '_%s_xb' % name).line((points.next(), points.next()))
+
 
 initialize_item(AssociationItem, UML.Association)
 initialize_item(AssociationEnd)
