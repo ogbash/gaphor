@@ -229,7 +229,7 @@ class AssociationItem(RelationshipItem, diacanvas.CanvasGroupable, diacanvas.Can
         y = (p1[1] + p2[1]) / 2.0
         w2 = w / 2.0
 
-        if p1[0] < p2[0] and p1[1] <= p2[1]:
+        if p1[0] < p2[0] and p1[1] < p2[1]:
             xx = -w2 * cos_angle
             yy = h * sin_angle - w2 * sin_angle
             self._label.set_affine((cos_angle, sin_angle, 0, -sin_angle, cos_angle, 0))
@@ -239,7 +239,7 @@ class AssociationItem(RelationshipItem, diacanvas.CanvasGroupable, diacanvas.Can
             yy = -h * sin_angle + w2 * sin_angle
             self._label.set_affine((-cos_angle, -sin_angle, 0, sin_angle, -cos_angle, 0))
 
-        elif p1[0] >= p2[0] and p1[1] > p2[1]:
+        elif p1[0] >= p2[0] and p1[1] >= p2[1]:
             xx = w2 * cos_angle
             yy = -h * sin_angle + w2 * sin_angle
             self._label.set_affine((-cos_angle, -sin_angle, 0, sin_angle, -cos_angle, 0))
@@ -254,7 +254,7 @@ class AssociationItem(RelationshipItem, diacanvas.CanvasGroupable, diacanvas.Can
         b0 = x + xx - 5, y + yy - h - 5, \
             x + xx + fabs(w * cos_angle) + fabs(h * sin_angle) + 5, \
             y + yy + fabs(h * cos_angle) + fabs(w * sin_angle) - h + 5
-        if p1[0] < p2[0] and p1[1] > p2[1] or p1[0] > p2[0] and p1[1] < p2[1]:
+        if p1[0] < p2[0] and p1[1] >= p2[1] or p1[0] >= p2[0] and p1[1] < p2[1]:
             b0 = x + xx - 5, \
                 y + yy - fabs(h * cos_angle) - fabs(w * sin_angle) + fabs(h * sin_angle) - 5, \
                 x + xx + fabs(w * cos_angle) + fabs(h * sin_angle) + 5, \
