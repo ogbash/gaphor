@@ -1,0 +1,4 @@
+1. Profiles
+
+1.1. Gaphor Stereotypes
+1.2. Diacanvas Stereotypes
