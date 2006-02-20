@@ -4,14 +4,14 @@
 
 import diacanvas
 from diagramitem import DiagramItem
-from gaphor.diagram import DiagramItemMeta
+from gaphor.diagram import LineItemMeta
 
-class DiagramLineBase(diacanvas.CanvasLine, DiagramItem):
+class LineItem(diacanvas.CanvasLine, DiagramItem):
     """
     Base class for diagram lines.
     """
 
-    __metaclass__ = DiagramItemMeta
+    __metaclass__ = LineItemMeta
 
     __gproperties__ = DiagramItem.__gproperties__
     __gsignals__ = DiagramItem.__gsignals__
@@ -25,6 +25,7 @@ class DiagramLineBase(diacanvas.CanvasLine, DiagramItem):
         #diacanvas.CanvasLine.__init__(self)
         self.__gobject_init__()
         DiagramItem.__init__(self, id)
+        #super(LineItem, self).__init__(id)
         self.props.horizontal = False
 
 
@@ -35,15 +36,6 @@ class DiagramLineBase(diacanvas.CanvasLine, DiagramItem):
     # the four methods defined below. The items that are trying to connect
     # (mostly Relationship objects or CommentLines) know what kind of item
     # they are allowed to connect to.
-
-    def find_relationship(self, head_subject, tail_subject):
-        """Find an already existing relationship between head_subject and
-        tail_subject. The following things should be taken into account:
-        - The returned relationship object will be used for this item.
-        - The relationship should not already exist in the canvas.
-        """
-        return None
-
     def allow_connect_handle(self, handle, connecting_to):
         """This method is called by a canvas item if the user tries to
         connect this object's handle. allow_connect_handle() checks if
@@ -86,7 +78,7 @@ class DiagramLineBase(diacanvas.CanvasLine, DiagramItem):
 
 
 
-class DiagramLine(DiagramLineBase):
+class DiagramLine(LineItem):
     """
     Gaphor lines. This line is serializable and has a popup
     menu.
@@ -108,7 +100,7 @@ class DiagramLine(DiagramLineBase):
         pass
 
     def save (self, save_func):
-        DiagramLineBase.save(self, save_func)
+        LineItem.save(self, save_func)
         for prop in ('affine', 'color', 'orthogonal', 'horizontal'):
             save_func(prop, self.get_property(prop))
         points = [ ]
@@ -135,7 +127,7 @@ class DiagramLine(DiagramLineBase):
         elif name in ('tail_connection', 'tail-connection'):
             self._load_tail_connection = value
         else:
-            DiagramLineBase.load(self, name, value)
+            LineItem.load(self, name, value)
 
     def postload(self):
         if hasattr(self, '_load_head_connection'):
@@ -144,11 +136,11 @@ class DiagramLine(DiagramLineBase):
         if hasattr(self, '_load_tail_connection'):
             self._load_tail_connection.connect_handle(self.handles[-1])
             del self._load_tail_connection
-        DiagramLineBase.postload(self)
+        LineItem.postload(self)
 
 
 
-class FreeLine(DiagramLineBase):
+class FreeLine(LineItem):
     """
     A line with disabled last handle. This allows to create diagram items,
     which have one or more additional lines.
@@ -157,7 +149,7 @@ class FreeLine(DiagramLineBase):
     is called main point.
     """
     def __init__(self, id = None, mpt = None):
-        DiagramLineBase.__init__(self, id)
+        LineItem.__init__(self, id)
 
         # expose first handle
         self._handle = self.handles[0]
@@ -178,4 +170,4 @@ class FreeLine(DiagramLineBase):
         self.handles[-1].set_pos_i(*self._main_point)
         self._handle.set_pos_i(*self._handle.get_pos_i()) # really strange, but we have to do this
 
-        DiagramLineBase.on_update(self, affine)
+        LineItem.on_update(self, affine)

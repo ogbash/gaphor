@@ -61,7 +61,26 @@ or centre of a line and name can be put horizontaly or along line path.
 
 
 == Canvas Line Named Items ==
+Basic class for line-like items is LineItem class.
 
+= Line Items =
+== Line Handles ==
+Line has at leas two handles. These handles are reffered as head (first
+hanndle) and tail (second handle) of line.
+
+When user puts an item on a diagram, then last handle can be moved to
+desired point. The same applies to line items. User puts line on diagram,
+head is set in mouse cursor point and tail is moved to desired point.
+
+Head and tail concepts are also used in diacanvas in case of canvas line.
+Head of line item is at the same end as head of canvas line. The same
+applies for tail.
+
+== Relationships ==
+See also relationships.txt.
+
+Relationships are implemented using Python descriptors. See Relationship,
+DependencyRelationship and AssociationRelationship classes for examples.
 
 = Stereotypes =
 See also stereotypes.txt.

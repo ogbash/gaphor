@@ -12,21 +12,22 @@ import diacanvas
 
 from gaphor import resource
 from gaphor import UML
-from gaphor.diagram.relationship import RelationshipItem
+from gaphor.diagram.relationship import DiagramLine
 
 STEREOTYPE_OPEN = '\xc2\xab' # '<<'
 STEREOTYPE_CLOSE = '\xc2\xbb' # '>>'
 
-class IncludeItem(RelationshipItem):
+class IncludeItem(DiagramLine):
     """A UseCase Include dependency.
     """
 
     __uml__ = UML.Include
+    __relationship__ = 'addition', None, 'includingCase', 'include'
 
     FONT = 'sans 10'
 
     def __init__(self, id=None):
-        RelationshipItem.__init__(self, id)
+        DiagramLine.__init__(self, id)
 
         font = pango.FontDescription(self.FONT)
         self._stereotype = diacanvas.shape.Text()
@@ -38,10 +39,10 @@ class IncludeItem(RelationshipItem):
         self.set(dash=(7.0, 5.0), has_head=1)
 
     def save(self, save_func):
-        RelationshipItem.save(self, save_func)
+        DiagramLine.save(self, save_func)
 
     def load(self, name, value):
-        RelationshipItem.load(self, name, value)
+        DiagramLine.load(self, name, value)
 
     def update_label(self, p1, p2):
         w, h = self._stereotype.to_pango_layout(True).get_pixel_size()
@@ -56,7 +57,7 @@ class IncludeItem(RelationshipItem):
         return x, y, w, h
 
     def on_update (self, affine):
-        RelationshipItem.on_update(self, affine)
+        DiagramLine.on_update(self, affine)
         handles = self.handles
         middle = len(handles)/2
         b1 = self.update_label(handles[middle-1].get_pos_i(),
@@ -67,21 +68,16 @@ class IncludeItem(RelationshipItem):
                          max(b1[2] + b1[0], b2[2]), max(b1[3] + b1[1], b2[3])))
 
     def on_shape_iter(self):
-        for s in RelationshipItem.on_shape_iter(self):
+        for s in DiagramLine.on_shape_iter(self):
             yield s
         yield self._stereotype
 
+    #
     # Gaphor Connection Protocol
-
-    def find_relationship(self, head_subject, tail_subject):
-        """See RelationshipItem.find_relationship().
-        """
-        return self._find_relationship(head_subject, tail_subject,
-                                       ('addition', None),
-                                       ('includingCase', 'include'))
+    #
 
     def allow_connect_handle(self, handle, connecting_to):
-        """See RelationshipItem.allow_connect_handle().
+        """See DiagramLine.allow_connect_handle().
         """
         try:
             return isinstance(connecting_to.subject, UML.UseCase)
@@ -89,7 +85,7 @@ class IncludeItem(RelationshipItem):
             return 0
 
     def confirm_connect_handle (self, handle):
-        """See RelationshipItem.confirm_connect_handle().
+        """See DiagramLine.confirm_connect_handle().
 
         In case of an Implementation, the head should be connected to an
         Interface and the tail to a BehavioredClassifier.
@@ -103,7 +99,7 @@ class IncludeItem(RelationshipItem):
         if c1 and c2:
             s1 = c1.subject
             s2 = c2.subject
-            relation = self.find_relationship(s1, s2)
+            relation = self.relationship
             if not relation:
                 relation = resource(UML.ElementFactory).create(UML.Include)
                 relation.addition = s1
@@ -111,7 +107,7 @@ class IncludeItem(RelationshipItem):
             self.subject = relation
 
     def confirm_disconnect_handle (self, handle, was_connected_to):
-        """See RelationshipItem.confirm_disconnect_handle().
+        """See DiagramLine.confirm_disconnect_handle().
         """
         #print 'confirm_disconnect_handle', handle
         self.set_subject(None)

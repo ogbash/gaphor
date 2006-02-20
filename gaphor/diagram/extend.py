@@ -20,6 +20,7 @@ class ExtendItem(IncludeItem):
     """
 
     __uml__ = UML.Extend
+    __relationship__ = 'extendedCase', None, 'extension', 'extend'
 
     FONT = 'sans 10'
 
@@ -28,14 +29,9 @@ class ExtendItem(IncludeItem):
 
         self._stereotype.set_text(STEREOTYPE_OPEN + 'extend' + STEREOTYPE_CLOSE)
 
+    #
     # Gaphor Connection Protocol
-
-    def find_relationship(self, head_subject, tail_subject):
-        """See RelationshipItem.find_relationship().
-        """
-        return self._find_relationship(head_subject, tail_subject,
-                                       ('extendedCase', None),
-                                       ('extension', 'extend'))
+    #
 
     def confirm_connect_handle (self, handle):
         """See RelationshipItem.confirm_connect_handle().
@@ -52,7 +48,7 @@ class ExtendItem(IncludeItem):
         if c1 and c2:
             s1 = c1.subject
             s2 = c2.subject
-            relation = self.find_relationship(s1, s2)
+            relation = self.relationship
             if not relation:
                 relation = UML.create(UML.Extend)
                 relation.extendedCase = s1

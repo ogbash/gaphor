@@ -1007,9 +1007,15 @@ class CreateLinksAction(Action):
         for other_item in diagram.canvas.root.children:
             if not other_item.subject:
                 continue
-
+                
+            #
+            # fixme: AttributeError is catched below; this leads to many
+            # problems; for example if there is no relationship attribute
+            # of an diagramline due to programming error, then there will
+            # be no information about it
+            #
             try:
-                while new_rel.find_relationship(item.subject, other_item.subject):
+                while item_type.relationship.relationship(new_rel, item.subject, other_item.subject):
                     self.connect_relationship(new_rel, item, other_item)
                     #item.connect_handle(new_rel.handles[0])
                     #other_item.connect_handle(new_rel.handles[-1])
@@ -1018,9 +1024,8 @@ class CreateLinksAction(Action):
             except AttributeError:
                 pass
 
-            # Try the other way too:
             try:
-                while new_rel.find_relationship(other_item.subject, item.subject):
+                while item_type.relationship.relationship(new_rel, other_item.subject, item.subject):
                     self.connect_relationship(new_rel, other_item, item)
                     #other_item.connect_handle(new_rel.handles[0])
                     #item.connect_handle(new_rel.handles[-1])
