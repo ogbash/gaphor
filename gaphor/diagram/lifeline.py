@@ -7,7 +7,7 @@ import pango
 import diacanvas
 from gaphor import UML
 from diagramline import FreeLine
-from nameditem import RectNamedItem
+from nameditem import NamedItem
 
 from gaphor.diagram.groupable import GroupBase
 
@@ -52,8 +52,10 @@ class LifetimeItem(FreeLine):
 
 
 
-class LifelineItem(RectNamedItem, GroupBase):
+class LifelineItem(NamedItem, GroupBase):
     __uml__ = UML.Lifeline
+
+    __align__ = NamedItem.NAMED_ITEM_C
 
     __gproperties__ = {
         'has-lifetime': (gobject.TYPE_BOOLEAN, 'has lifetime',
@@ -68,7 +70,7 @@ class LifelineItem(RectNamedItem, GroupBase):
 
     def __init__(self, id = None):
         GroupBase.__init__(self)
-        RectNamedItem.__init__(self, id)
+        NamedItem.__init__(self, id)
 
         self._has_lifetime = False
         self.set_prop_persistent('has-lifetime')
@@ -92,14 +94,14 @@ class LifelineItem(RectNamedItem, GroupBase):
             self._lifetime.request_update()
             self.request_update()
         else:
-            RectNamedItem.do_set_property(self, pspec, value)
+            NamedItem.do_set_property(self, pspec, value)
 
 
     def do_get_property(self, pspec):
         if pspec.name == 'has-lifetime':
             return self._has_lifetime
         else:
-            return RectNamedItem.do_get_property(self, pspec)
+            return NamedItem.do_get_property(self, pspec)
 
 
     def get_popup_menu(self):
@@ -107,7 +109,7 @@ class LifelineItem(RectNamedItem, GroupBase):
 
 
     def on_update(self, affine):
-        RectNamedItem.on_update(self, affine)
+        NamedItem.on_update(self, affine)
         GroupBase.on_update(self, affine)
 
 # TODO: Maybe use a separate canvasItem for the line, since it creates

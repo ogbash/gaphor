@@ -178,104 +178,96 @@ class TextElement(diacanvas.CanvasItem, diacanvas.CanvasEditable, DiagramItem):
 from zope import interface
 from gaphor.interfaces import INamedItemView
 
-class NamedItem(ElementItem, diacanvas.CanvasEditable):
+
+H_ALIGN_LEFT, H_ALIGN_CENTER, H_ALIGN_RIGHT = range(3)
+V_ALIGN_TOP, V_ALIGN_MIDDLE, V_ALIGN_BOTTOM = range(3)
+
+class ItemName(object):
+    """
+    Diagram item (canvas element based) align and margins.
+    """
+    def __init__(self, **kw):
+        super(ItemName, self).__init__()
+
+        self.outside = False
+        if self.outside:
+            self.margin  = (15, 30) * 2 # top, right, bottom, left as in CSS
+        else:
+            self.margin = (2, ) * 4
+        self.align   = H_ALIGN_CENTER
+        self.valign  = V_ALIGN_TOP
+
+        for k, v in kw.items():
+            setattr(self, k, v)
+
+
+
+class Named(diacanvas.CanvasEditable):
     interface.implements(INamedItemView)
-    
-    __gproperties__ = {
-        'name': (gobject.TYPE_STRING, 'name', '', '', gobject.PARAM_READWRITE)
-    }
 
-    FONT = 'sans bold 10'
-
-    popup_menu = (
-        'RenameItem',
-        'separator',
-        'EditDelete',
-        'ShowElementInTreeView'
-    )
-
-    def __init__(self, id=None):
-        ElementItem.__init__(self, id)
-
+    def __init__(self, id = None):
         self._name = diacanvas.shape.Text()
         self._name.set_font_description(pango.FontDescription(self.FONT))
         self._name.set_alignment(pango.ALIGN_CENTER)
         #self._name.set_wrap_mode(diacanvas.shape.WRAP_NONE)
         self._name.set_markup(False)
 
-    def postload(self):
-        ElementItem.postload(self)
-        # Set values in postload, since the load function doesn't send
-        # notifications.
-        self._name.set_text(self.subject.name or '')
 
-    def edit(self):
-        """For diacnavas versions < 0.14.0.
-        """
-        self.start_editing(self._name)
-
-    def do_set_property(self, pspec, value):
-        if pspec.name == 'name':
-            self.preserve_property('name')
-            self.subject.name = value
-        else:
-            ElementItem.do_set_property(self, pspec, value)
-
-    def do_get_property(self, pspec):
-        if pspec.name == 'name':
-            return self.subject.name
-        else:
-            return ElementItem.do_get_property(self, pspec)
-
+    #
+    # utility methods
+    #
     def get_name_size(self):
-        """Return the width and height of the name shape.
+        """
+        Return the width and height of the name shape.
         """
         return self._name.to_pango_layout(True).get_pixel_size()
 
+
     def update_name(self, x, y, width, height):
+        """
+        Update name position, width and height.
+
+        @arg x: position on x axis
+        @arg y: position on y axis
+        @arg width: width of name
+        @arg height height of name
+        """
         self._name.set_pos((x, y))
         self._name.set_max_width(width)
         self._name.set_max_height(height)
 
-    def on_subject_notify(self, pspec, notifiers=()):
-        """See DiagramItem.on_subject_notify().
+    #
+    # DiagramItem subject notification methods
+    #
+    def on_subject_notify(self, pspec, notifiers = ()):
         """
-        #log.info('NamedItem.on_subject_notify: %s' % str(notifiers))
+        Subject change notification callback.
+        """
         ElementItem.on_subject_notify(self, pspec, ('name',) + notifiers)
         self._name.set_text(self.subject and self.subject.name or '')
 
+
     def on_subject_notify__name(self, subject, pspec):
+        """
+        Subject name change notification callback.
+        """
         assert self.subject is subject
-        #print 'on_subject_notify__name: %s' % self.subject.name
         self._name.set_text(self.subject.name or '')
         self.request_update()
 
-    # CanvasItem callbacks:
 
-    #def on_update(self, affine):
-    #    ElementItem.on_update(self, affine)
-
-    def on_event (self, event):
-        if event.type == diacanvas.EVENT_2BUTTON_PRESS:
-            self.rename()
-            return True
-        else:
-            return ElementItem.on_event(self, event)
-
-    def on_shape_iter(self):
-        return iter([self._name])
-
-    # Editable
-
+    #
+    # CanvasEditable interface implementation
+    #
     def on_editable_get_editable_shape(self, x, y):
-        #print 'on_editable_get_editable_shape', x, y
         return self._name
 
+
     def on_editable_start_editing(self, shape):
-        self.preserve_property('name')
+        pass
+
 
     def on_editable_editing_done(self, shape, new_text):
-        self.preserve_property('name')
         if new_text != self.subject.name:
             self.canvas.get_undo_manager().begin_transaction()
             self.subject.name = new_text
@@ -284,118 +276,138 @@ class NamedItem(ElementItem, diacanvas.CanvasEditable):
         self.request_update()
 
 
+    #
+    # CanvasItem or CanvasLine callbacks
+    #
+    def on_event (self, event):
+        if event.type == diacanvas.EVENT_2BUTTON_PRESS:
+            self.rename()
+            return True
+        else:
+            return ElementItem.on_event(self, event)
 
-class SimpleNamedItem(NamedItem):
-    """
-    Simple named item with border.
-
-    Deriving classes have to implement get_border and draw_border methods.
-
-    _border - border of named item, i.e. ellipse for usecase, rectangle for
-              object
-
-    See ObjectNodeItem and UseCaseItem for examples.
-    """
-
-    WIDTH = 120
-    HEIGHT = 60
-    MARGIN_X = 60
-    MARGIN_Y = 30
-
-    def __init__(self, id=None):
-        NamedItem.__init__(self, id)
-        self._border = self.get_border()
-        self._border.set_line_width(2.0)
-        self.set(width = self.WIDTH, height = self.HEIGHT)
-
-    def on_update(self, affine):
-        width, height = self.get_name_size()
-        self.set(min_width = width + self.MARGIN_X,
-            min_height = height + self.MARGIN_Y)
-
-        self.update_name(x = 0, y = (self.height - height) / 2,
-           width = self.width, height = height)
-
-        NamedItem.on_update(self, affine)
-
-        self.draw_border()
-        self.expand_bounds(1.0)
 
     def on_shape_iter(self):
-        return itertools.chain(
-            NamedItem.on_shape_iter(self),
-            iter([self._border]))
+        return iter([self._name])
 
 
 
-class RectNamedItem(SimpleNamedItem):
-    def get_border(self):
+class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
+    __gproperties__ = {
+        'name': (gobject.TYPE_STRING, 'name', '', '', gobject.PARAM_READWRITE)
+    }
+
+    popup_menu = (
+        'RenameItem',
+        'separator',
+        'EditDelete',
+        'ShowElementInTreeView'
+    )
+
+    # these values can be overriden
+    FONT = 'sans bold 10'
+    WIDTH = 120
+    HEIGHT = 60
+
+    # common align cases
+    NAMED_ITEM_CT   = ItemName()                          # center, top
+    NAMED_ITEM_C    = ItemName(valign = V_ALIGN_MIDDLE)   # center, middle
+    NAMED_ITEM_CB   = ItemName(valign = V_ALIGN_BOTTOM)   # center, bottom
+
+    NAMED_ITEM_O_LT = ItemName(align = H_ALIGN_LEFT,      # outside, left, top
+        outside = True)
+    NAMED_ITEM_O_RB = ItemName(align = H_ALIGN_RIGHT,     # outside, right, bottom
+        valign = V_ALIGN_BOTTOM, outside = True)
+    NAMED_ITEM_O_CB = ItemName(valign = V_ALIGN_BOTTOM,   # outside, center, bottom
+        outside = True)
+
+    __align__ = NAMED_ITEM_CT
+
+    def __init__(self, id=None):
+        ElementItem.__init__(self, id)
+        Named.__init__(self, id)
+
+        self._border = self.create_border()
+
+
+    def create_border(self, border = None):
         """
-        Return border of simple named item.
+        Create default border.
         """
-        return diacanvas.shape.Path()
+        if border is None:
+            border = diacanvas.shape.Path()
+        border.set_line_width(2.0)
+        self.set(width = self.WIDTH, height = self.HEIGHT)
+        return border
 
 
     def draw_border(self):
         """
-        Draw border of simple named item.
+        Draw border of simple named item, rectangle by default.
         """
         self._border.rectangle((0, 0), (self.width, self.height))
 
 
-
-class SideNamedItem(GroupBase):
-    """
-    Base class for named items, which name should be over, below or on
-    one of the sides of an element.
-
-    Side property of named element determines where name should be put,
-    i.e. left-top side of an item.
-    """
-    MARGIN_X = 10
-    MARGIN_Y = 10
-    SIDES = (SIDE_TOP, SIDE_BOTTOM, SIDE_LEFT, SIDE_RIGHT) = ('t', 'b', 'l', 'r')
-
-    def __init__(self):
-        GroupBase.__init__(self)
-
-        self._name = TextElement('name')
-        self.add(self._name)
-        self.side = self.SIDE_TOP + self.SIDE_LEFT
-
-    def set_side(self, side):
-        if len(side) > 2:
-            raise ValueError('side should contain max two values')
-
-        assert len(side) < 3
-
-        if len(side) == 1 and side[0] not in self.SIDES \
-                or len(side) == 2 and side[1] not in self.SIDES:
-            raise ValueError('side value should contain only one of values %s' % (self.SIDES, ))
-
-        self._side = side
-
-
-    side = property(lambda self: self._side, set_side)
-
-
     def on_update(self, affine):
-        w, h = self._name.get_size()
+        width, height = self.get_name_size()
 
-        side = self.side
-        if self.SIDE_LEFT in side:
-            x = -w
-        elif self.SIDE_RIGHT in side:
-            x = self.width
-        else:
-            x = (self.width - w) / 2
+        align = self.__align__
 
-        if self.SIDE_TOP in side:
-            y = -h
-        elif self.SIDE_BOTTOM in side:
-            y = self.height
+        if align.outside:
+            if align.align == H_ALIGN_LEFT:
+                x = -width - align.margin[3]
+            elif align.align == H_ALIGN_CENTER:
+                x = (self.width - width) / 2
+            elif align.align == H_ALIGN_RIGHT:
+                x = self.width + align.margin[1]
+            else:
+                assert False
+
+            if align.valign == V_ALIGN_TOP:
+                y = -height - align.margin[0]
+            elif align.valign == V_ALIGN_MIDDLE:
+                y = (self.height - height) / 2
+            elif align.valign == V_ALIGN_BOTTOM:
+                y = self.height + align.margin[2]
+            else:
+                assert False
+
         else:
-            y = (self.height - h) / 2
-            
-        self._name.update_label(x, y)
-        GroupBase.on_update(self, affine)
+            self.set(min_width = width + align.margin[1] + align.margin[3],
+                min_height = height + align.margin[0] + align.margin[2])
+
+            if align.align == H_ALIGN_LEFT:
+                x = align.margin[3]
+            elif align.align == H_ALIGN_CENTER:
+                x = (self.width - width) / 2
+            elif align.align == H_ALIGN_RIGHT:
+                x = self.width - width - align.margin[1]
+            else:
+                assert False
+
+            if align.valign == V_ALIGN_TOP:
+                y = align.margin[0]
+            elif align.valign == V_ALIGN_MIDDLE:
+                y = (self.height - height) / 2
+            elif align.valign == V_ALIGN_BOTTOM:
+                y = self.height - height - align.margin[2]
+            else:
+                assert False
+
+        self.update_name(x, y, width, height)
+
+        ElementItem.on_update(self, affine)
+
+        if align.outside:
+            wx, hy = x + width, y + height
+            self.set_bounds((min(0, x), min(0, y),
+                max(self.width, wx), max(self.height, hy)))
+
+        self.draw_border()
+        self.expand_bounds(1.0)
+
+
+    def on_shape_iter(self):
+        return itertools.chain([self._border],
+            Named.on_shape_iter(self),
+            ElementItem.on_shape_iter(self))

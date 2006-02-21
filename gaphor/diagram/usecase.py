@@ -7,16 +7,19 @@ from __future__ import generators
 
 import diacanvas
 from gaphor import UML
-from nameditem import SimpleNamedItem
+from nameditem import NamedItem
 
-class UseCaseItem(SimpleNamedItem):
-    __uml__ = UML.UseCase
+class UseCaseItem(NamedItem):
+    __uml__   = UML.UseCase
+    __align__ = NamedItem.NAMED_ITEM_C
 
-    def get_border(self):
-        return diacanvas.shape.Ellipse()
+    def create_border(self):
+        border = diacanvas.shape.Ellipse()
+        return NamedItem.create_border(self, border)
+
 
     def draw_border(self):
-        self._border.ellipse(center=(self.width / 2, self.height / 2),
-                              width=self.width, height=self.height)
+        self._border.ellipse(center = (self.width / 2, self.height / 2),
+            width = self.width, height = self.height)
 
 

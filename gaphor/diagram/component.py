@@ -1,9 +1,6 @@
 '''
 ComponentItem diagram item
 '''
-# vim:sw=4:et
-
-from __future__ import generators
 
 import gobject
 import pango
@@ -24,7 +21,6 @@ class ComponentItem(ClassifierItem):
 
     def __init__(self, id=None):
         ClassifierItem.__init__(self, id)
-        self.set(height=50, width=120)
         # Set drawing style to compartment w// small icon
         self.drawing_style = self.DRAW_COMPARTMENT_ICON
 
@@ -61,3 +57,6 @@ class ComponentItem(ClassifierItem):
         yield self._component_icon
         yield self._lower_bar
         yield self._upper_bar
+
+
+# vim:sw=4:et
