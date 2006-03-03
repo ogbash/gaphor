@@ -7,10 +7,14 @@ import itertools
 import gobject
 import pango
 import diacanvas
-from elementitem import ElementItem
-from gaphor.diagram.groupable import GroupBase
-from gaphor.diagram.diagramitem import DiagramItem
 from gaphor.diagram import DiagramItemMeta
+from gaphor.diagram.align import ITEM_ALIGN_CT, \
+    MARGIN_TOP, MARGIN_RIGHT, MARGIN_BOTTOM, MARGIN_LEFT, \
+    H_ALIGN_LEFT, H_ALIGN_CENTER, H_ALIGN_RIGHT, \
+    V_ALIGN_TOP, V_ALIGN_MIDDLE, V_ALIGN_BOTTOM
+from gaphor.diagram.diagramitem import DiagramItem
+from gaphor.diagram.elementitem import ElementItem
+from gaphor.diagram.groupable import GroupBase
 
 
 class TextElement(diacanvas.CanvasItem, diacanvas.CanvasEditable, DiagramItem):
@@ -179,29 +183,6 @@ from zope import interface
 from gaphor.interfaces import INamedItemView
 
 
-H_ALIGN_LEFT, H_ALIGN_CENTER, H_ALIGN_RIGHT = range(3)
-V_ALIGN_TOP, V_ALIGN_MIDDLE, V_ALIGN_BOTTOM = range(3)
-
-class ItemName(object):
-    """
-    Diagram item (canvas element based) align and margins.
-    """
-    def __init__(self, **kw):
-        super(ItemName, self).__init__()
-
-        self.outside = False
-        if self.outside:
-            self.margin  = (15, 30) * 2 # top, right, bottom, left as in CSS
-        else:
-            self.margin = (2, ) * 4
-        self.align   = H_ALIGN_CENTER
-        self.valign  = V_ALIGN_TOP
-
-        for k, v in kw.items():
-            setattr(self, k, v)
-
-
-
 class Named(diacanvas.CanvasEditable):
     interface.implements(INamedItemView)
 
@@ -309,21 +290,15 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
     WIDTH = 120
     HEIGHT = 60
 
-    # common align cases
-    NAMED_ITEM_CT   = ItemName()                          # center, top
-    NAMED_ITEM_C    = ItemName(valign = V_ALIGN_MIDDLE)   # center, middle
-    NAMED_ITEM_CB   = ItemName(valign = V_ALIGN_BOTTOM)   # center, bottom
-
-    NAMED_ITEM_O_LT = ItemName(align = H_ALIGN_LEFT,      # outside, left, top
-        outside = True)
-    NAMED_ITEM_O_RB = ItemName(align = H_ALIGN_RIGHT,     # outside, right, bottom
-        valign = V_ALIGN_BOTTOM, outside = True)
-    NAMED_ITEM_O_CB = ItemName(valign = V_ALIGN_BOTTOM,   # outside, center, bottom
-        outside = True)
-
-    __align__ = NAMED_ITEM_CT
+    n_align = ITEM_ALIGN_CT
 
     def __init__(self, id=None):
+        align = self.n_align
+        if align.outside:
+            align.margin = (2, ) * 4
+        else:
+            align.margin = (15, 30) * 2
+
         ElementItem.__init__(self, id)
         Named.__init__(self, id)
 
@@ -351,46 +326,46 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
     def on_update(self, affine):
         width, height = self.get_name_size()
 
-        align = self.__align__
+        align = self.n_align
 
         if align.outside:
             if align.align == H_ALIGN_LEFT:
-                x = -width - align.margin[3]
+                x = -width - align.margin[MARGIN_LEFT]
             elif align.align == H_ALIGN_CENTER:
                 x = (self.width - width) / 2
             elif align.align == H_ALIGN_RIGHT:
-                x = self.width + align.margin[1]
+                x = self.width + align.margin[MARGIN_RIGHT]
             else:
                 assert False
 
             if align.valign == V_ALIGN_TOP:
-                y = -height - align.margin[0]
+                y = -height - align.margin[MARGIN_TOP]
             elif align.valign == V_ALIGN_MIDDLE:
                 y = (self.height - height) / 2
             elif align.valign == V_ALIGN_BOTTOM:
-                y = self.height + align.margin[2]
+                y = self.height + align.margin[MARGIN_BOTTOM]
             else:
                 assert False
 
         else:
-            self.set(min_width = width + align.margin[1] + align.margin[3],
-                min_height = height + align.margin[0] + align.margin[2])
+            self.set(min_width = width + align.margin[MARGIN_RIGHT] + align.margin[MARGIN_LEFT],
+                min_height = height + align.margin[MARGIN_TOP] + align.margin[MARGIN_BOTTOM])
 
             if align.align == H_ALIGN_LEFT:
-                x = align.margin[3]
+                x = align.margin[MARGIN_LEFT]
             elif align.align == H_ALIGN_CENTER:
                 x = (self.width - width) / 2
             elif align.align == H_ALIGN_RIGHT:
-                x = self.width - width - align.margin[1]
+                x = self.width - width - align.margin[MARGIN_RIGHT]
             else:
                 assert False
 
             if align.valign == V_ALIGN_TOP:
-                y = align.margin[0]
+                y = align.margin[MARGIN_TOP]
             elif align.valign == V_ALIGN_MIDDLE:
                 y = (self.height - height) / 2
             elif align.valign == V_ALIGN_BOTTOM:
-                y = self.height - height - align.margin[2]
+                y = self.height - height - align.margin[MARGIN_BOTTOM]
             else:
                 assert False
 

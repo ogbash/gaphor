@@ -13,8 +13,9 @@ import diacanvas
 from gaphor import UML
 from gaphor import resource
 from gaphor.diagram import TextElement
-from nameditem import NamedItem
 from gaphor.diagram.groupable import GroupBase
+from gaphor.diagram.nameditem import NamedItem
+from gaphor.diagram.align import ITEM_ALIGN_O_CB, ITEM_ALIGN_O_LT, ITEM_ALIGN_O_RB
 
 
 class ActivityNodeItem(NamedItem):
@@ -39,7 +40,7 @@ class InitialNodeItem(ActivityNodeItem):
     top-left side of node.
     """
     __uml__   = UML.InitialNode
-    __align__ = NamedItem.NAMED_ITEM_O_LT
+    n_align = ITEM_ALIGN_O_LT
     
     RADIUS = 10
 
@@ -69,7 +70,7 @@ class ActivityFinalNodeItem(ActivityNodeItem):
     """
 
     __uml__   = UML.ActivityFinalNode
-    __align__ = NamedItem.NAMED_ITEM_O_RB
+    n_align = ITEM_ALIGN_O_RB
 
     RADIUS_1 = 10
     RADIUS_2 = 15
@@ -111,7 +112,7 @@ class FlowFinalNodeItem(ActivityNodeItem):
     """
 
     __uml__   = UML.FlowFinalNode
-    __align__ = NamedItem.NAMED_ITEM_O_RB
+    n_align = ITEM_ALIGN_O_RB
 
     RADIUS = 10
 
@@ -192,7 +193,7 @@ class DecisionNodeItem(FDNode):
     """
 
     __uml__   = UML.DecisionNode
-    __align__ = NamedItem.NAMED_ITEM_O_LT
+    n_align = ITEM_ALIGN_O_LT
 
     RADIUS = 15
 
@@ -223,7 +224,7 @@ class ForkNodeItem(FDNode, GroupBase):
     Representation of fork or join node.
     """
     __uml__ = UML.ForkNode
-    __align__ = NamedItem.NAMED_ITEM_O_CB
+    n_align = ITEM_ALIGN_O_CB
 
     WIDTH  =  6.0
     HEIGHT = 45.0

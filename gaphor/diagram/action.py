@@ -7,7 +7,8 @@ import gobject
 import pango
 import diacanvas
 from gaphor import UML
-from nameditem import NamedItem
+from gaphor.diagram.nameditem import NamedItem
+from gaphor.diagram.align import ITEM_ALIGN_C
 
 def make_arc(radius, edges, q=1):
     """Create a tupple of edges points, which represent a 90 degrees
@@ -27,7 +28,7 @@ def alter_arc(arc, offsetx=0, offsety=0):
 
 class ActionItem(NamedItem):
     __uml__   = UML.Action
-    __align__ = NamedItem.NAMED_ITEM_C
+    n_align = ITEM_ALIGN_C
 
     RADIUS = 15
     arc_1 = make_arc(radius=RADIUS, edges=10, q=0)

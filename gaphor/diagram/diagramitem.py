@@ -11,6 +11,7 @@ from gaphor import resource
 from gaphor.misc import uniqueid
 from gaphor.UML import Element, Presentation
 from gaphor.UML.properties import association
+from gaphor.diagram.align import ITEM_ALIGN_CT
 
 
 class DiagramItem(Presentation):
@@ -41,7 +42,10 @@ class DiagramItem(Presentation):
                        gobject.TYPE_NONE, (gobject.TYPE_STRING,))
     }
 
-    popup_menu = ()
+    s_align = ITEM_ALIGN_CT # default stereotype align: center, top
+
+    popup_menu = ('Stereotype', stereotype_list)
+    stereotype_list = []
 
     def __init__(self, id=None):
         Presentation.__init__(self)
@@ -201,6 +205,37 @@ class DiagramItem(Presentation):
         self.subject = subject
 
     def get_popup_menu(self):
+        """In the popup menu a submenu is created with Stereotypes than can be
+        applied to this classifier (Class, Interface).
+        If the class itself is a metaclass, an option is added to check if the class
+        exists.
+        """
+        subject = self.subject
+        stereotype_list = self.stereotype_list
+        stereotype_list[:] = []
+        if isinstance(subject, UML.Class) and subject.extension:
+            # Add an action that can be used to check if the metaclass is an
+            # existing metaclass
+            pass
+        else:
+            from itemactions import ApplyStereotypeAction, register_action
+            NamedElement = UML.NamedElement
+
+            cls = type(subject)
+
+            # Find classes that are superclasses of our subject
+            mro = filter(lambda e:issubclass(e, NamedElement), cls.__mro__)
+            # Find out their names
+            names = map(getattr, mro, ['__name__'] * len(mro))
+            # Find stereotypes that extend out metaclass
+            classes = self._subject._factory.select(lambda e: e.isKindOf(cls) and e.name in names)
+
+            for class_ in classes:
+                for extension in class_.extension:
+                    stereotype = extension.ownedEnd.type
+                    stereotype_action = ApplyStereotypeAction(stereotype)
+                    register_action(stereotype_action, 'ItemFocus')
+                    stereotype_list.append(stereotype_action.id)
         return self.popup_menu
 
     def _subject_connect_helper(self, element, callback_prefix, prop_list):

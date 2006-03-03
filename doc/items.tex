@@ -1,0 +1,207 @@
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\geometry{papername = a4paper, margin = 3cm}
+
+\title{Gaphor Diagram Item Model}
+\author{wrobell@pld-linux.org}
+
+\newcommand{\module}[1]{\texttt{#1}}
+\newcommand{\class}[1]{\texttt{#1}}
+\newcommand{\attr}[1]{\texttt{#1}}
+\newcommand{\stereotype}[1]{\texttt{<<#1>>}}
+\newcommand{\warning}[1]{\textbf{WARNING:~#1}}
+
+\begin{document}
+\maketitle
+
+\section{Basic Classes of Diagram Items}
+
+DiagramItem is a basic class for all items.
+
+Attributes:
+\begin{description}
+\item[subject] UML class
+\item[popup\_menu] item popup menu definition, i.e. rename, delete, add
+  attribute, etc.
+\end{description}
+
+Methods:
+\begin{description}
+\item[set\_subject] assign UML class to an item
+\end{description}
+
+\subsection{Relationship Between DiagramItem Object and UML Class}
+
+There is one to one association between item and UML class in DiagramItem
+class.
+
+DiagramItem.subject attribute can be None as in case of LifetimeItem or
+CommentLine items.
+
+DiagramItem can also visualize more than one UML class, for example
+DecisionNodeItem items can represent combined decsion and merge nodes or
+ForkNodeItem items can represent fork and join nodes (see UML
+specification).
+
+\subsection{Items and Diacanvas}
+Diacanvas library supports different canvas objects
+\begin{itemize}
+\item canvas element
+\item canvas line
+\end{itemize}
+
+Because of differences between them, DiagramItem class cannot be directly
+associated with canvas line or canvas element. Connection between diacanvas
+classes and items is established by other abstract classes. These are
+\begin{description}
+\item[LineItem]
+    canvas line items like dependencies, association, flows, message, etc.
+
+\item[ElementItem]
+    canvas element items with shape like class, component, lifeline,
+    comment, activity nodes, etc.
+            
+\item[FeatureItem]
+    canvas element, which is part of an item; for example represents
+    attributes and methods of classes 
+\end{description}
+
+\section{Named Items}
+
+Named items represents these UML classes, which derive from NamedElement.
+All named items are editable, so user can double click on an item and
+change or enter name of UML object.
+
+We have to distinguish between two kind of named elements. One is related
+to canvas elements and second is related to canvas lines. For example, name
+of UML object can be positioned inside or outside canvas element (class vs.
+initial node), also name can be centered or on left/right side of canvas
+element. In case of canvas line based items name can be near head, tail
+or centre of a line and name can be put horizontaly or along line path.
+
+\subsection{Canvas Element Named Items}
+
+
+\subsection{Canvas Line Named Items}
+Basic class for line-like items is LineItem class.
+
+\section{Line Items}
+\subsection{Line Handles}
+Line has at leas two handles. These handles are reffered as head (first
+hanndle) and tail (second handle) of line.
+
+When user puts an item on a diagram, then last handle can be moved to
+desired point. The same applies to line items. User puts line on diagram,
+head is set in mouse cursor point and tail is moved to desired point.
+
+Head and tail concepts are also used in diacanvas in case of canvas line.
+Head of line item is at the same end as head of canvas line. The same
+applies for tail.
+
+\subsection{Relationships}
+See also relationships.txt.
+
+Relationships are implemented using Python descriptors. See Relationship,
+DependencyRelationship and AssociationRelationship classes for examples.
+
+\section{Stereotypes}
+See also stereotypes.txt.
+
+\section{Align of Item Elements}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=.5\textwidth]{flow}
+\end{center}
+\caption{Flow Item example}\label{items:example:flow}
+\end{figure}
+
+Many items consist of several elements, for example flow item is a line
+with
+\begin{itemize}
+\item stereotype
+\item name
+\item guard
+\end{itemize}
+These elements are aligned to a line of flow (see
+figure~\ref{items:example:flow})
+\begin{itemize}
+\item stereotype is near one of the ends of line
+\item name is under stereotype
+\item guard is near the middle of line
+\end{itemize}
+
+Element of items are aligned according to attributes of
+\class{ItemAlign} and \class{LineAlign} classes. Align information is
+assigned to every item element, but position is calculated from item
+perspective, for example
+\begin{itemize}
+\item align of an element to the (left, top) with margin $(10, 15, 15, 5)$
+puts an element in (left, top) corner of item; it is located $10px$ from the top
+and $5px$ from the left of item
+\item align of an element as above but outside item puts an element $10px$
+from top and $5px$ from the left of item; top and left margin values are
+used for top vertical and left horizontal align
+\end{itemize}
+See figure~\ref{items:align} for more examples.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=.95\textwidth]{align}
+\end{center}
+\caption{Align of Item Elements}\label{items:align}
+\end{figure}
+
+Align constants and classes are defined in \module{gaphor::diagram::align} module.
+
+\subsection{Stereotype and Name Align}
+
+There are two important elements of items
+\begin{itemize}
+\item every item shown on diagram has stereotype (even item for Stereotype
+    UML class, which stereotype is \stereotype{stereotype})
+\item many items has names
+\end{itemize}
+
+Therefore every item class has \attr{s\_align} attribute, which defines
+align of stereotypes.
+
+Named items are aligned according to \attr{n\_align} attribute. If
+stereotype and name align values are the same, then name is put
+centered under stereotype.
+
+\warning{What about FeatureItem stereotype?}
+
+\section{Profiles}
+
+\subsection{Gaphor Stereotypes}
+
+\begin{description}
+\item[name] UML class of an item derives from NamedElement; name
+        should be shown on diagram
+\item[nostereotype] item does not allow to edit stereotypes
+\end{description}
+
+\subsection{Diacanvas Stereotypes}
+
+\begin{description}
+\item[editable] item is editable when it is possible to change name of an
+    item by clicking twice on it
+\end{description}
+
+
+\section{Glossary}
+
+\begin{description}
+\item[item]
+    item put on diagram by user, i.e. ClassItem, AssociationItem;
+    conforms to UML notation of UML metamodel classes
+
+\item[UML class]
+    class defined in UML metamodel
+\end{description}
+
+\end{document}

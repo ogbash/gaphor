@@ -10,9 +10,11 @@ import pango
 import diacanvas
 from gaphor import UML
 from gaphor import resource
+
 from gaphor.diagram import TextElement
-from nameditem import NamedItem
+from gaphor.diagram.align import ITEM_ALIGN_C
 from gaphor.diagram.groupable import GroupBase
+from gaphor.diagram.nameditem import NamedItem
 
 
 class ObjectNodeItem(NamedItem, GroupBase):
@@ -25,7 +27,7 @@ class ObjectNodeItem(NamedItem, GroupBase):
 
     __uml__ = UML.ObjectNode
 
-    __align__ = NamedItem.NAMED_ITEM_C
+    n_align = ITEM_ALIGN_C
 
     FONT = 'sans 10'
     MARGIN = 10

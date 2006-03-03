@@ -43,7 +43,6 @@ class ClassItem(ClassifierItem, diacanvas.CanvasGroupable):
                             1, gobject.PARAM_READWRITE),
     }
 
-    stereotype_list = []
     popup_menu = ClassifierItem.popup_menu + (
         'separator',
         'AbstractClass',
@@ -78,38 +77,6 @@ class ClassItem(ClassifierItem, diacanvas.CanvasGroupable):
         self.sync_attributes()
         self.sync_operations()
 
-    def get_popup_menu(self):
-        """In the popup menu a submenu is created with Stereotypes than can be
-        applied to this classifier (Class, Interface).
-        If the class itself is a metaclass, an option is added to check if the class
-        exists.
-        """
-        subject = self.subject
-        stereotype_list = self.stereotype_list
-        stereotype_list[:] = []
-        if isinstance(subject, UML.Class) and subject.extension:
-            # Add an action that can be used to check if the metaclass is an
-            # existing metaclass
-            pass
-        else:
-            from itemactions import ApplyStereotypeAction, register_action
-            NamedElement = UML.NamedElement
-            Class = UML.Class
-
-            # Find classes that are superclasses of our subject
-            mro = filter(lambda e:issubclass(e, NamedElement), type(self.subject).__mro__)
-            # Find out their names
-            names = map(getattr, mro, ['__name__'] * len(mro))
-            # Find stereotypes that extend out metaclass
-            classes = self._subject._factory.select(lambda e: e.isKindOf(Class) and e.name in names)
-
-            for class_ in classes:
-                for extension in class_.extension:
-                    stereotype = extension.ownedEnd.type
-                    stereotype_action = ApplyStereotypeAction(stereotype)
-                    register_action(stereotype_action, 'ItemFocus')
-                    stereotype_list.append(stereotype_action.id)
-        return ClassifierItem.get_popup_menu(self)
 
     def do_set_property(self, pspec, value):
         if pspec.name == 'show-attributes':
