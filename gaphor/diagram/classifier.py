@@ -120,8 +120,6 @@ class ClassifierItem(NamedItem):
     FONT_ABSTRACT='sans bold italic 10'
     FROM_FONT='sans 8'
 
-    stereotype_list = []
-
     def __init__(self, id=None):
         NamedItem.__init__(self, id)
         self.set(height=50, width=100)

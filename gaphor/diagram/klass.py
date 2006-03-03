@@ -46,7 +46,7 @@ class ClassItem(ClassifierItem, diacanvas.CanvasGroupable):
     popup_menu = ClassifierItem.popup_menu + (
         'separator',
         'AbstractClass',
-        'Stereotype', stereotype_list,
+#        'Stereotype', stereotype_list,
         'Fold',
         'separator',
         'CreateAttribute',

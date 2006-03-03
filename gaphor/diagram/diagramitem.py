@@ -8,6 +8,7 @@ import diacanvas
 from diacanvas import CanvasItem
 
 from gaphor import resource
+from gaphor import UML
 from gaphor.misc import uniqueid
 from gaphor.UML import Element, Presentation
 from gaphor.UML.properties import association
@@ -44,8 +45,8 @@ class DiagramItem(Presentation):
 
     s_align = ITEM_ALIGN_CT # default stereotype align: center, top
 
-    popup_menu = ('Stereotype', stereotype_list)
     stereotype_list = []
+    popup_menu = ('Stereotype', stereotype_list)
 
     def __init__(self, id=None):
         Presentation.__init__(self)

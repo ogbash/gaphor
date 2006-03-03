@@ -278,7 +278,7 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
         'name': (gobject.TYPE_STRING, 'name', '', '', gobject.PARAM_READWRITE)
     }
 
-    popup_menu = (
+    popup_menu = ElementItem.popup_menu + (
         'RenameItem',
         'separator',
         'EditDelete',
