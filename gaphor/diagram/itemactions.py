@@ -950,7 +950,7 @@ class ApplyStereotypeAction(CheckAction, ObjectAction):
         except NoFocusItemError:
             pass
         else:
-            self.sensitive = isinstance(item, (ClassItem, PackageItem))
+            #self.sensitive = isinstance(item, (ClassItem, PackageItem))
             if self.sensitive and item.subject:
                 self.active = self.stereotype in item.subject.appliedStereotype
             else:

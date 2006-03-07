@@ -23,10 +23,6 @@ class ActivityNodeItem(NamedItem):
     Basic class for simple activity nodes. Simple activity node is not
     resizable.
     """
-    popup_menu = (
-        'EditDelete',
-    )
-
     def __init__(self, id = None):
         NamedItem.__init__(self, id)
         # Do not allow resizing of the node

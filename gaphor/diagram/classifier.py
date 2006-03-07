@@ -5,7 +5,7 @@
 # TODO: make loading of features work (adjust on_groupable_add)
 #       probably best to do is subclass Feature in OperationItem and A.Item
 
-from __future__ import generators
+import itertools
 
 import gobject
 import pango
@@ -14,16 +14,17 @@ import diacanvas
 from gaphor import UML
 from gaphor.i18n import _
 
-from nameditem import NamedItem
-from feature import FeatureItem
-
-STEREOTYPE_OPEN = '\xc2\xab' # '<<'
-STEREOTYPE_CLOSE = '\xc2\xbb' # '>>'
+from gaphor.diagram.nameditem import NamedItem
+from gaphor.diagram.feature import FeatureItem
+from gaphor.diagram.align import MARGIN_TOP, MARGIN_RIGHT, MARGIN_BOTTOM, MARGIN_LEFT
 
 class Compartment(list):
     """Specify a compartment in a class item.
     A compartment has a line on top and a list of FeatureItems.
     """
+
+    MARGIN_X = 5 
+    MARGIN_Y = 5
 
     def __init__(self, name, owner):
         self.name = name
@@ -31,7 +32,6 @@ class Compartment(list):
         self.visible = True
         self.separator = diacanvas.shape.Path()
         self.separator.set_line_width(2.0)
-        self.sep_y = 0
 
     def save(self, save_func):
         #log.debug('Compartment.save: %s' % self)
@@ -46,30 +46,37 @@ class Compartment(list):
         local_elements = [f.subject for f in self]
         return s and s in local_elements
 
-    def pre_update(self, width, height, affine):
-        """Calculate the size of the feates in this compartment.
-        """
+
+    def get_size(self):
+        # fixme: kill True argument of Feature.get_size method
+        if len(self) > 0:
+            sizes = [f.get_size(True) for f in self]
+            width = max(map(lambda p: p[0], sizes))
+            height = sum(map(lambda p: p[1], sizes))
+            return width, height
+        else:
+            return 0, 0
+
+
+    def update(self, affine, width, y):
         if self.visible:
-            self.sep_y = height
-            height += ClassifierItem.COMP_MARGIN_Y
+            self.separator.line(((0, y), (width, y)))
+
+            y += self.MARGIN_Y
             for f in self:
-                w, h = f.get_size(update=True)
-                #log.debug('feature: %f, %f' % (w, h))
-                f.set_pos(ClassifierItem.COMP_MARGIN_X, height)
-                f.set_property('visible', True)
-                height += h
-                width = max(width, w + 2 * ClassifierItem.COMP_MARGIN_X)
-            height += ClassifierItem.COMP_MARGIN_Y
+                w, h = f.get_size(update = True)
+                f.set_pos(self.MARGIN_X, y)
+                y += h
+
+                f.props.visible = True
+                self.owner.update_child(f, affine)
+            y += self.MARGIN_Y
+
+            return y
         else:
             for f in self:
-                f.set_property('visible', False)
-        return width, height
-
-    def update(self, width, affine):
-        if self.visible:
-            for f in self:
-                self.owner.update_child(f, affine)
-            self.separator.line(((0, self.sep_y), (width, self.sep_y)))
+                f.props.visible = False
+            return 0
 
         
 class ClassifierItem(NamedItem):
@@ -108,8 +115,6 @@ class ClassifierItem(NamedItem):
     }
     HEAD_MARGIN_X = 30
     HEAD_MARGIN_Y = 10
-    COMP_MARGIN_X = 5 
-    COMP_MARGIN_Y = 5
     # Default size for small icons
     ICON_WIDTH    = 15
     ICON_HEIGHT   = 25
@@ -128,12 +133,6 @@ class ClassifierItem(NamedItem):
 
         self._border = diacanvas.shape.Path()
         self._border.set_line_width(2.0)
-
-        self._has_stereotype = False
-        self._stereotype = diacanvas.shape.Text()
-        self._stereotype.set_font_description(pango.FontDescription(self.FONT_STEREOTYPE))
-        self._stereotype.set_alignment(pango.ALIGN_CENTER)
-        self._stereotype.set_markup(False)
 
         self._from = diacanvas.shape.Text()
         self._from.set_font_description(pango.FontDescription(ClassifierItem.FROM_FONT))
@@ -223,49 +222,16 @@ class ClassifierItem(NamedItem):
 
         self.request_update()
 
-    def set_stereotype(self, text=None):
-        """Set the stereotype text for the diagram item.
-        The text, not a Stereotype object.
-        @text: text to set.
-        """
-        if text:
-            self._stereotype.set_text(STEREOTYPE_OPEN + text + STEREOTYPE_CLOSE)
-            self._has_stereotype = True
-        else:
-            self._has_stereotype = False
-        self.request_update()
-
-    def update_stereotype(self):
-        """Update the stereotype definitions (text) on this class.
-
-        Note: This method is also called from
-        ExtensionItem.confirm_connect_handle
-        """
-        subject = self.subject
-        applied_stereotype = subject.appliedStereotype
-        if applied_stereotype:
-            # Return a nice name to display as stereotype:
-            # make first character lowercase unless the second character is uppercase.
-            s = ', '.join([s and len(s) > 1 and s[1].isupper() and s \
-                           or s and s[0].lower() + s[1:] \
-                           or str(s) for s in map(getattr, applied_stereotype, ['name'] * len(applied_stereotype))])
-            # Phew!
-            self.set_stereotype(s)
-            return True
-        else:
-            self.set_stereotype(None)
-        self.request_update()
 
     def on_subject_notify(self, pspec, notifiers=()):
         #log.debug('Class.on_subject_notify(%s, %s)' % (pspec, notifiers))
         NamedItem.on_subject_notify(self, pspec,
                                     ('namespace', 'namespace.name',
-                                     'isAbstract', 'appliedStereotype') + notifiers)
+                                     'isAbstract') + notifiers)
         # Create already existing attributes and operations:
         if self.subject:
             self.on_subject_notify__namespace(self.subject)
             self.on_subject_notify__isAbstract(self.subject)
-            self.update_stereotype()
         self.request_update()
 
     def on_subject_notify__namespace(self, subject, pspec=None):
@@ -294,72 +260,39 @@ class ClassifierItem(NamedItem):
             self._name.set_font_description(pango.FontDescription(self.FONT))
         self.request_update()
 
-    def on_subject_notify__appliedStereotype(self, subject, pspec=None):
-        if self.subject:
-            self.update_stereotype()
 
-    def update_compartment_common(self, affine, width, height):
-        """Update parts that are common for update_compartment() and
-        update_compartment_icon().
+    def update_name(self, affine):
 
-        @affine:
-        @width: Height calculated before this function was called.
-        @height: Width
-        @return: (width, height) newly calculated size.
-        """
-        # Update class name
-        name_width, name_height = self.get_name_size()
-        name_y = height
-        height += name_height
-        
-        height += ClassifierItem.HEAD_MARGIN_Y
-        width = max(width, name_width + ClassifierItem.HEAD_MARGIN_X)
+        # determine width and height of comparments
+        if self._drawing_style == self.DRAW_COMPARTMENT:
+            sizes = [comp.get_size() for comp in self._compartments]
+            width = max(map(lambda p: p[0], sizes)) + Compartment.MARGIN_X * 2
+            height = sum(map(lambda p: p[1], sizes))
 
-        compartments = self._compartments
+            height += len(self._compartments) * Compartment.MARGIN_Y * 2
 
-        for comp in compartments: width, height = comp.pre_update(width, height, affine)
+        align, nx, ny, name_width, name_height = NamedItem.update_name(self, affine)
 
-        self.set(min_width=width, min_height=height)
+        if self._drawing_style == self.DRAW_COMPARTMENT:
+            y = self.props.min_height # first compartment position
 
-        width = max(width, self.width)
-        height = max(height, self.height)
+            # update minimum dimensions
+            min_width = max(width, self.props.min_width)
+            min_height = self.props.min_height + height
+            self.set(min_width = min_width, min_height = min_height)
 
-        # We know the width of all text components and set it:
-        # Note: here the upadte flag is set for all sub-items (again)!
-        #    self._name.set_property('width', width)
-        self.update_name(x=0, y=name_y, width=width, height=name_height)
+        #self._from.set_pos((0, name_y + name_height-2))
+        #self._from.set_max_width(width)
+        #self._from.set_max_height(name_height)
 
-        self._from.set_pos((0, name_y + name_height-2))
-        self._from.set_max_width(width)
-        self._from.set_max_height(name_height)
+            # determine current width of item
+            width = self.width
+            for comp in self._compartments:
+                y = comp.update(affine, width, y)
 
-        for comp in compartments:
-            comp.update(width, affine)
+            self._border.rectangle((0, 0), (width, height))
 
-        self._border.rectangle((0,0),(width, height))
-
-        return width, height
-
-    def update_compartment(self, affine):
-        """Update state so it can draw itself with the box style.
-        """
-        has_stereotype = self._has_stereotype
-
-        width = 0
-        height = ClassifierItem.HEAD_MARGIN_Y
-
-        if has_stereotype:
-            st_width, st_height = self._stereotype.to_pango_layout(True).get_pixel_size()
-            width = st_width + ClassifierItem.HEAD_MARGIN_X/2
-            st_y = height = height / 2
-            height += st_height
-
-        width, height = self.update_compartment_common(affine, width, height)
-
-        if has_stereotype:
-            self._stereotype.set_pos((0, st_y))
-            self._stereotype.set_max_width(width)
-            self._stereotype.set_max_height(st_height)
+        return align, nx, ny, name_width, name_height
 
 
     def update_compartment_icon(self, affine):
@@ -375,24 +308,16 @@ class ClassifierItem(NamedItem):
     def on_update(self, affine):
         """Overrides update callback.
         """
-        if self._drawing_style == self.DRAW_COMPARTMENT:
-            self.update_compartment(affine)
-        elif self._drawing_style == self.DRAW_COMPARTMENT_ICON:
+        if self._drawing_style == self.DRAW_COMPARTMENT_ICON:
             self.update_compartment_icon(affine)
         elif self._drawing_style == self.DRAW_ICON:
             self.update_icon(affine)
-        else:
-            raise Exception, "Unknown drawing style: %s" % self._drawing_style
 
         NamedItem.on_update(self, affine)
-
-        self.expand_bounds(1.0)
 
     def on_shape_iter(self):
         if self._drawing_style in (self.DRAW_COMPARTMENT, self.DRAW_COMPARTMENT_ICON):
             yield self._border
-            if self._has_stereotype and self._drawing_style == self.DRAW_COMPARTMENT:
-                yield self._stereotype
             yield self._from
 
             for c in self._compartments:

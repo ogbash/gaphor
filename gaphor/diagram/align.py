@@ -1,6 +1,8 @@
 """
-Align constants.
+Align classes and constants.
 """
+
+import pango
 
 #
 # Enums
@@ -33,6 +35,52 @@ class ItemAlign(object):
 
         for k, v in kw.items():
             setattr(self, k, v)
+
+
+    def get_pos(self, text, width, height, iwidth, iheight):
+        if self.outside:
+            if self.align == H_ALIGN_LEFT:
+                x = -width - self.margin[MARGIN_LEFT]
+            elif self.align == H_ALIGN_CENTER:
+                x = (iwidth - width) / 2
+            elif self.align == H_ALIGN_RIGHT:
+                x = iwidth + self.margin[MARGIN_RIGHT]
+            else:
+                assert False
+
+            if self.valign == V_ALIGN_TOP:
+                y = -height - self.margin[MARGIN_TOP]
+            elif self.valign == V_ALIGN_MIDDLE:
+                y = (iheight - height) / 2
+            elif self.valign == V_ALIGN_BOTTOM:
+                y = iheight + self.margin[MARGIN_BOTTOM]
+            else:
+                assert False
+
+        else:
+            if self.align == H_ALIGN_LEFT:
+                x = self.margin[MARGIN_LEFT]
+            elif self.align == H_ALIGN_CENTER:
+                x = (iwidth - width) / 2
+            elif self.align == H_ALIGN_RIGHT:
+                x = iwidth - width - self.margin[MARGIN_RIGHT]
+            else:
+                assert False
+
+            if self.valign == V_ALIGN_TOP:
+                y = self.margin[MARGIN_TOP]
+            elif self.valign == V_ALIGN_MIDDLE:
+                y = (iheight - height) / 2
+            elif self.valign == V_ALIGN_BOTTOM:
+                y = iheight - height - self.margin[MARGIN_BOTTOM]
+            else:
+                assert False
+        return x, y
+
+
+    def get_min_size(self, width, height):
+        return width + self.margin[MARGIN_RIGHT] + self.margin[MARGIN_LEFT], \
+            height + self.margin[MARGIN_TOP] + self.margin[MARGIN_BOTTOM]
 
 
 # common align cases for canvas based items

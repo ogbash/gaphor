@@ -4,6 +4,7 @@ Such as a modifier 'subject' property and a unique id.
 """
 
 import gobject
+import pango
 import diacanvas
 from diacanvas import CanvasItem
 
@@ -12,8 +13,10 @@ from gaphor import UML
 from gaphor.misc import uniqueid
 from gaphor.UML import Element, Presentation
 from gaphor.UML.properties import association
-from gaphor.diagram.align import ITEM_ALIGN_CT
+from gaphor.diagram.align import ItemAlign
 
+STEREOTYPE_OPEN  = '\xc2\xab' # '<<'
+STEREOTYPE_CLOSE = '\xc2\xbb' # '>>'
 
 class DiagramItem(Presentation):
     """Basic functionality for all model elements (lines and elements!).
@@ -32,6 +35,9 @@ class DiagramItem(Presentation):
             disconnect = DiagramItem.disconnect
             ...
     """
+
+    FONT_STEREOTYPE = 'sans 10'
+
     __gproperties__ = {
         'subject':        (gobject.TYPE_PYOBJECT, 'subject',
                          'subject held by the diagram item',
@@ -42,8 +48,6 @@ class DiagramItem(Presentation):
         '__unlink__': (gobject.SIGNAL_RUN_FIRST,
                        gobject.TYPE_NONE, (gobject.TYPE_STRING,))
     }
-
-    s_align = ITEM_ALIGN_CT # default stereotype align: center, top
 
     stereotype_list = []
     popup_menu = ('Stereotype', stereotype_list)
@@ -65,8 +69,25 @@ class DiagramItem(Presentation):
         # properties, which should be saved in file
         self._persistent_props = set()
 
+        # stereotype
+        self._has_stereotype = False
+        self._stereotype = diacanvas.shape.Text()
+        self._stereotype.set_font_description(pango.FontDescription(self.FONT_STEREOTYPE))
+        self._stereotype.set_alignment(pango.ALIGN_CENTER)
+        self._stereotype.set_markup(False)
+
+        # parts of items to be drawn on diagram
+        # can contain stereotype, etc.
+        self._parts = set()
+
+        align = ItemAlign() # center, top
+        if not align.outside:
+            align.margin = (5, 30) * 2
+        self.s_align = align
+
 
     id = property(lambda self: self._id, doc='Id')
+
 
     def set_prop_persistent(self, name):
         """
@@ -220,16 +241,14 @@ class DiagramItem(Presentation):
             pass
         else:
             from itemactions import ApplyStereotypeAction, register_action
-            NamedElement = UML.NamedElement
 
             cls = type(subject)
 
-            # Find classes that are superclasses of our subject
-            mro = filter(lambda e:issubclass(e, NamedElement), cls.__mro__)
-            # Find out their names
-            names = map(getattr, mro, ['__name__'] * len(mro))
+            # find out names of classes, which are superclasses of our
+            # subject
+            names = set(c.__name__ for c in cls.__mro__ if issubclass(c, Element))
             # Find stereotypes that extend out metaclass
-            classes = self._subject._factory.select(lambda e: e.isKindOf(cls) and e.name in names)
+            classes = self._subject._factory.select(lambda e: e.isKindOf(UML.Class) and e.name in names)
 
             for class_ in classes:
                 for extension in class_.extension:
@@ -325,7 +344,7 @@ class DiagramItem(Presentation):
         #log.info('DiagramItem.on_subject_notify: %s' % self.__subject_notifier_ids)
         # First, split all notifiers on '.'
         callback_prefix = 'on_subject_notify_'
-        notifiers = map(str.split, notifiers, ['.'] * len(notifiers))
+        notifiers = map(str.split, notifiers + ('appliedStereotype',), ['.'] * len(notifiers))
         old_subject = self.__the_subject
         subject_connect_helper = self._subject_connect_helper
         subject_disconnect_helper = self._subject_disconnect_helper
@@ -341,6 +360,7 @@ class DiagramItem(Presentation):
                 #log.debug('DiaCanvasItem.on_subject_notify: %s' % signal)
                 #self._subject_connect(self.subject, n)
                 subject_connect_helper(subject, callback_prefix, n)
+                self.update_stereotype()
 
         # Execute some sort of ItemNewSubject action
         try:
@@ -350,6 +370,11 @@ class DiagramItem(Presentation):
         else:
             main_window.execute_action('ItemNewSubject')
         self.request_update()
+
+
+    def on_subject_notify__appliedStereotype(self, subject, pspec=None):
+        if self.subject:
+            self.update_stereotype()
 
     # DiaCanvasItem callbacks
 
@@ -401,3 +426,63 @@ class DiagramItem(Presentation):
             #print self.__class__.__name__, 'Disconnecting NOT allowed.'
         return 0
 
+    #
+    # Stereotypes
+    #
+    def set_stereotype(self, text = None):
+        """
+        Set the stereotype text for the diagram item.
+
+        Note, that text is not Stereotype object.
+
+        @arg text: stereotype text
+        """
+        if text:
+            self._stereotype.set_text(STEREOTYPE_OPEN + text + STEREOTYPE_CLOSE)
+            self._has_stereotype = True
+            self._parts.add(self._stereotype)
+        else:
+            self._has_stereotype = False
+            if self._stereotype in self._parts:
+                self._parts.remove(self._stereotype)
+        self.request_update()
+
+
+    def update_stereotype(self):
+        """
+        Update the stereotype definitions (text) of this item.
+
+        Note, that this method is also called from
+        ExtensionItem.confirm_connect_handle method.
+        """
+        subject = self.subject
+        applied_stereotype = subject.appliedStereotype
+
+        def stereotype_name(name):
+            """
+            Return a nice name to display as stereotype. First will be
+            character lowercase unless the second character is uppercase.
+            """
+            if len(name) > 1 and name[1].isupper():
+                return name
+            else:
+                return name[0].lower() + name[1:]
+
+        if applied_stereotype:
+            # generate string with stereotype names separated by coma
+            s = ', '.join(stereotype_name(s.name) for s in applied_stereotype)
+
+            # Phew!
+            self.set_stereotype(s)
+            return True
+        else:
+            self.set_stereotype(None)
+        self.request_update()
+
+
+    #
+    # utility methods
+    #
+    @staticmethod
+    def get_text_size(text):
+        return text.to_pango_layout(True).get_pixel_size()

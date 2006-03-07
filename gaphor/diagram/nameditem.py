@@ -8,10 +8,7 @@ import gobject
 import pango
 import diacanvas
 from gaphor.diagram import DiagramItemMeta
-from gaphor.diagram.align import ITEM_ALIGN_CT, \
-    MARGIN_TOP, MARGIN_RIGHT, MARGIN_BOTTOM, MARGIN_LEFT, \
-    H_ALIGN_LEFT, H_ALIGN_CENTER, H_ALIGN_RIGHT, \
-    V_ALIGN_TOP, V_ALIGN_MIDDLE, V_ALIGN_BOTTOM
+from gaphor.diagram.align import ItemAlign
 from gaphor.diagram.diagramitem import DiagramItem
 from gaphor.diagram.elementitem import ElementItem
 from gaphor.diagram.groupable import GroupBase
@@ -186,36 +183,13 @@ from gaphor.interfaces import INamedItemView
 class Named(diacanvas.CanvasEditable):
     interface.implements(INamedItemView)
 
-    def __init__(self, id = None):
+    def __init__(self):
         self._name = diacanvas.shape.Text()
         self._name.set_font_description(pango.FontDescription(self.FONT))
         self._name.set_alignment(pango.ALIGN_CENTER)
         #self._name.set_wrap_mode(diacanvas.shape.WRAP_NONE)
         self._name.set_markup(False)
 
-
-    #
-    # utility methods
-    #
-    def get_name_size(self):
-        """
-        Return the width and height of the name shape.
-        """
-        return self._name.to_pango_layout(True).get_pixel_size()
-
-
-    def update_name(self, x, y, width, height):
-        """
-        Update name position, width and height.
-
-        @arg x: position on x axis
-        @arg y: position on y axis
-        @arg width: width of name
-        @arg height height of name
-        """
-        self._name.set_pos((x, y))
-        self._name.set_max_width(width)
-        self._name.set_max_height(height)
 
     #
     # DiagramItem subject notification methods
@@ -290,17 +264,16 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
     WIDTH = 120
     HEIGHT = 60
 
-    n_align = ITEM_ALIGN_CT
-
-    def __init__(self, id=None):
-        align = self.n_align
+    def __init__(self, id = None):
+        align = ItemAlign() # center, top
         if align.outside:
             align.margin = (2, ) * 4
         else:
             align.margin = (15, 30) * 2
+        self.n_align = align
 
         ElementItem.__init__(self, id)
-        Named.__init__(self, id)
+        Named.__init__(self)
 
         self._border = self.create_border()
 
@@ -323,53 +296,57 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
         self._border.rectangle((0, 0), (self.width, self.height))
 
 
-    def on_update(self, affine):
-        width, height = self.get_name_size()
+    def get_name_size(self): # fixme: remove this method
+        return self.get_text_size(self._name)
 
-        align = self.n_align
 
-        if align.outside:
-            if align.align == H_ALIGN_LEFT:
-                x = -width - align.margin[MARGIN_LEFT]
-            elif align.align == H_ALIGN_CENTER:
-                x = (self.width - width) / 2
-            elif align.align == H_ALIGN_RIGHT:
-                x = self.width + align.margin[MARGIN_RIGHT]
-            else:
-                assert False
+    def update_name(self, affine):
+        def set_st_pos(text, x, y, width, height):
+            text.set_pos((x, y))
+            text.set_max_width(width)
+            text.set_max_height(height)
 
-            if align.valign == V_ALIGN_TOP:
-                y = -height - align.margin[MARGIN_TOP]
-            elif align.valign == V_ALIGN_MIDDLE:
-                y = (self.height - height) / 2
-            elif align.valign == V_ALIGN_BOTTOM:
-                y = self.height + align.margin[MARGIN_BOTTOM]
-            else:
-                assert False
+        nalign = self.n_align
+        salign = self.s_align
 
+        if self._has_stereotype:
+            sw, sh = self.get_text_size(self._stereotype)
+            nw, nh = self.get_text_size(self._name)
+
+            width = max(sw, nw)
+            height = sh + nh
+
+            # set stereotype position
+            sx, sy = salign.get_pos(self._stereotype, width, height, self.width, self.height)
+            set_st_pos(self._stereotype, sx, sy, sw, sh)
+
+            # place name below stereotype
+            nx = sx + (sw - nw) / 2.0
+            ny = sy + sh
+            set_st_pos(self._name, nx, ny, nw, nh)
+
+            # determine position and size of stereotype and name placed
+            # together
+            x = min(sx, nx)
+            y = sy
+
+            align = salign
         else:
-            self.set(min_width = width + align.margin[MARGIN_RIGHT] + align.margin[MARGIN_LEFT],
-                min_height = height + align.margin[MARGIN_TOP] + align.margin[MARGIN_BOTTOM])
+            width, height = self.get_text_size(self._name)
+            x, y = nalign.get_pos(self._name, width, height, self.width, self.height)
+            set_st_pos(self._name, x, y, width, height)
 
-            if align.align == H_ALIGN_LEFT:
-                x = align.margin[MARGIN_LEFT]
-            elif align.align == H_ALIGN_CENTER:
-                x = (self.width - width) / 2
-            elif align.align == H_ALIGN_RIGHT:
-                x = self.width - width - align.margin[MARGIN_RIGHT]
-            else:
-                assert False
+            align = nalign
 
-            if align.valign == V_ALIGN_TOP:
-                y = align.margin[MARGIN_TOP]
-            elif align.valign == V_ALIGN_MIDDLE:
-                y = (self.height - height) / 2
-            elif align.valign == V_ALIGN_BOTTOM:
-                y = self.height - height - align.margin[MARGIN_BOTTOM]
-            else:
-                assert False
+        if not align.outside:
+            min_width, min_height = align.get_min_size(width, height)
+            self.set(min_width = min_width, min_height = min_height)
 
-        self.update_name(x, y, width, height)
+        return align, x, y, width, height
+
+
+    def on_update(self, affine):
+        align, x, y, width, height = self.update_name(affine)
 
         ElementItem.on_update(self, affine)
 
