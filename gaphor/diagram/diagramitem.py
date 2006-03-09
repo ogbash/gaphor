@@ -235,9 +235,8 @@ class DiagramItem(Presentation):
         subject = self.subject
         stereotype_list = self.stereotype_list
         stereotype_list[:] = []
-        if isinstance(subject, UML.Class) and subject.extension:
-            # Add an action that can be used to check if the metaclass is an
-            # existing metaclass
+
+        if self.get_fixed_stereotype():
             pass
         else:
             from itemactions import ApplyStereotypeAction, register_action
@@ -468,15 +467,19 @@ class DiagramItem(Presentation):
             else:
                 return name[0].lower() + name[1:]
 
-        if applied_stereotype:
-            # generate string with stereotype names separated by coma
-            s = ', '.join(stereotype_name(s.name) for s in applied_stereotype)
-
-            # Phew!
-            self.set_stereotype(s)
-            return True
+        fixed = self.get_fixed_stereotype()            
+        if fixed:
+            self.set_stereotype(fixed)
         else:
-            self.set_stereotype(None)
+            if applied_stereotype:
+                # generate string with stereotype names separated by coma
+                s = ', '.join(stereotype_name(s.name) for s in applied_stereotype)
+
+                # Phew!
+                self.set_stereotype(s)
+                return True
+            else:
+                self.set_stereotype(None)
         self.request_update()
 
 
@@ -486,3 +489,24 @@ class DiagramItem(Presentation):
     @staticmethod
     def get_text_size(text):
         return text.to_pango_layout(True).get_pixel_size()
+
+    def get_fixed_stereotype(self):
+        """
+        Check for fixed stereotypes. If any should be applied, then return
+        stereotype text, otherwise None is returned.
+        """
+        if hasattr(self, '__fixed_stereotype__'):
+
+            assert isinstance(self.__fixed_stereotype__, dict)
+
+            subject = self.subject
+            for cls, stereotype in self.__fixed_stereotype__.items():
+                pre = True
+                # if there is additional predicate, then check subject
+                if isinstance(stereotype, tuple):
+                    stereotype, predicate = stereotype
+                    assert callable(predicate)
+                    pre = predicate(subject)
+
+                if pre and isinstance(subject, cls):
+                    return stereotype

@@ -33,6 +33,10 @@ class ClassItem(ClassifierItem, diacanvas.CanvasGroupable):
     interface.implements(IClassView)
 
     __uml__ = UML.Class, UML.Stereotype
+    __fixed_stereotype__ = {
+        UML.Stereotype: 'stereotype',
+        UML.Class     : ('metaclass', lambda subject: subject.extension),
+    }
     
     __gproperties__ = {
         'show-attributes': (gobject.TYPE_BOOLEAN, 'show attributes',
@@ -127,20 +131,6 @@ class ClassItem(ClassifierItem, diacanvas.CanvasGroupable):
         self.sync_uml_elements(self.subject.ownedOperation, self._operations,
                            self._create_operation)
 
-    def update_stereotype(self):
-        """Update the stereotype definitions on this class.
-
-        Note: This method is also called from ExtensionItem.confirm_connect_handle
-        """
-        subject = self.subject
-        #applied_stereotype = subject.appliedStereotype
-        if not ClassifierItem.update_stereotype(self):
-            if isinstance(subject, UML.Stereotype):
-                self.set_stereotype('stereotype')
-                return True
-            elif isinstance(subject, UML.Class) and subject.extension:
-                self.set_stereotype('metaclass')
-                return True
 
     def on_subject_notify(self, pspec, notifiers=()):
         #log.debug('Class.on_subject_notify(%s, %s)' % (pspec, notifiers))

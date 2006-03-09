@@ -11,7 +11,10 @@ from gaphor.diagram.align import MARGIN_TOP
 
 class PackageItem(NamedItem):
 
-    __uml__ = UML.Package
+    __uml__ = UML.Package, UML.Profile
+    __fixed_stereotype__ = {
+        UML.Profile: 'profile'
+    }
 
     TAB_X = 50
     TAB_Y = 20
