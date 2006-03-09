@@ -1,3 +1,8 @@
+======== stereotypes branch =========
+- namedelement.py: from NamedElement
+- items.tex: describe __uml__ and __fixed_stereotype__
+===== end of stereotypes branch =====
+
 ======= 0.8.0 ========
 - load uml2.gaphor and open other file or split flows and undo/redo.
   exception is raised. seems to be related to diagram item unlinking.
