@@ -15,7 +15,6 @@ from gaphor.misc.action import register_action
 
 from gaphor.diagram.objectnode import ObjectNodeItem
 from gaphor.diagram.klass import ClassItem
-from gaphor.diagram.package import PackageItem
 from gaphor.diagram.component import ComponentItem
 from gaphor.diagram.attribute import AttributeItem
 from gaphor.diagram.operation import OperationItem
@@ -950,7 +949,6 @@ class ApplyStereotypeAction(CheckAction, ObjectAction):
         except NoFocusItemError:
             pass
         else:
-            #self.sensitive = isinstance(item, (ClassItem, PackageItem))
             if self.sensitive and item.subject:
                 self.active = self.stereotype in item.subject.appliedStereotype
             else:
