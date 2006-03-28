@@ -15,7 +15,7 @@ from gaphor import resource
 from gaphor.diagram import TextElement
 from gaphor.diagram.groupable import GroupBase
 from gaphor.diagram.nameditem import NamedItem
-from gaphor.diagram.align import ITEM_ALIGN_O_CB, ITEM_ALIGN_O_LT, ITEM_ALIGN_O_RB
+from gaphor.diagram.align import H_ALIGN_LEFT, H_ALIGN_RIGHT, V_ALIGN_BOTTOM
 
 
 class ActivityNodeItem(NamedItem):
@@ -23,6 +23,8 @@ class ActivityNodeItem(NamedItem):
     Basic class for simple activity nodes. Simple activity node is not
     resizable.
     """
+    __o_align__ = True
+
     def __init__(self, id = None):
         NamedItem.__init__(self, id)
         # Do not allow resizing of the node
@@ -35,8 +37,8 @@ class InitialNodeItem(ActivityNodeItem):
     Representation of initial node. Initial node has name which is put near
     top-left side of node.
     """
-    __uml__   = UML.InitialNode
-    n_align = ITEM_ALIGN_O_LT
+    __uml__     = UML.InitialNode
+    __s_align__ = H_ALIGN_LEFT
     
     RADIUS = 10
 
@@ -65,8 +67,9 @@ class ActivityFinalNodeItem(ActivityNodeItem):
     which is put near right-bottom side of node.
     """
 
-    __uml__   = UML.ActivityFinalNode
-    n_align = ITEM_ALIGN_O_RB
+    __uml__      = UML.ActivityFinalNode
+    __s_align__  = H_ALIGN_RIGHT
+    __s_valign__ = V_ALIGN_BOTTOM
 
     RADIUS_1 = 10
     RADIUS_2 = 15
@@ -107,8 +110,9 @@ class FlowFinalNodeItem(ActivityNodeItem):
     put near right-bottom side of node.
     """
 
-    __uml__   = UML.FlowFinalNode
-    n_align = ITEM_ALIGN_O_RB
+    __uml__      = UML.FlowFinalNode
+    __s_align__  = H_ALIGN_RIGHT
+    __s_valign__ = V_ALIGN_BOTTOM
 
     RADIUS = 10
 
@@ -189,7 +193,7 @@ class DecisionNodeItem(FDNode):
     """
 
     __uml__   = UML.DecisionNode
-    n_align = ITEM_ALIGN_O_LT
+    __s_align__ = H_ALIGN_LEFT
 
     RADIUS = 15
 
@@ -219,8 +223,8 @@ class ForkNodeItem(FDNode, GroupBase):
     """
     Representation of fork or join node.
     """
-    __uml__ = UML.ForkNode
-    n_align = ITEM_ALIGN_O_CB
+    __uml__      = UML.ForkNode
+    __s_valign__ = V_ALIGN_BOTTOM
 
     WIDTH  =  6.0
     HEIGHT = 45.0

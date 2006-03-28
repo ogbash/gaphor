@@ -257,7 +257,7 @@ class ClassifierItem(NamedItem):
         if subject.isAbstract:
             self._name.set_font_description(pango.FontDescription(self.FONT_ABSTRACT))
         else:
-            self._name.set_font_description(pango.FontDescription(self.FONT))
+            self._name.set_font_description(pango.FontDescription(self.NAME_FONT))
         self.request_update()
 
 

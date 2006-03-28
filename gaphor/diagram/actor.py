@@ -17,7 +17,8 @@ from classifier import ClassifierItem
 
 class ActorItem(ClassifierItem):
 
-    __uml__ = UML.Actor
+    __uml__     = UML.Actor
+    __o_align__ = True
 
     HEAD=11
     ARM=19
@@ -57,12 +58,8 @@ class ActorItem(ClassifierItem):
         self._legs = diacanvas.shape.Path()
         self._legs.set_line_width(2.0)
 
-    def save (self, save_func):
-        ClassifierItem.save(self, save_func)
-        #self.save_property(save_func, 'name-width')
 
     def do_set_property (self, pspec, value):
-        #print 'Actor: Trying to set property', pspec.name, value
         if pspec.name == 'name-width':
             #self._name.set_property('width', value)
             pass

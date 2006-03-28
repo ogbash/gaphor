@@ -81,16 +81,3 @@ class ItemAlign(object):
     def get_min_size(self, width, height):
         return width + self.margin[MARGIN_RIGHT] + self.margin[MARGIN_LEFT], \
             height + self.margin[MARGIN_TOP] + self.margin[MARGIN_BOTTOM]
-
-
-# common align cases for canvas based items
-ITEM_ALIGN_CT   = ItemAlign()                           # center, top
-ITEM_ALIGN_C    = ItemAlign(valign = V_ALIGN_MIDDLE)    # center, middle
-ITEM_ALIGN_CB   = ItemAlign(valign = V_ALIGN_BOTTOM)    # center, bottom
-
-ITEM_ALIGN_O_LT = ItemAlign(align = H_ALIGN_LEFT,       # outside, left, top
-    outside = True)
-ITEM_ALIGN_O_RB = ItemAlign(align = H_ALIGN_RIGHT,      # outside, right, bottom
-    valign = V_ALIGN_BOTTOM, outside = True)
-ITEM_ALIGN_O_CB = ItemAlign(valign = V_ALIGN_BOTTOM,    # outside, center, bottom
-    outside = True)

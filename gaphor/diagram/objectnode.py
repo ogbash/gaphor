@@ -25,7 +25,9 @@ class ObjectNodeItem(NamedItem, GroupBase):
     Ordering information can be hidden by user.
     """
 
-    __uml__ = UML.ObjectNode
+    __uml__      = UML.ObjectNode
+
+    __s_valign__ = V_ALIGN_MIDDLE
 
     FONT = 'sans 10'
     MARGIN = 10
@@ -49,9 +51,6 @@ class ObjectNodeItem(NamedItem, GroupBase):
     def __init__(self, id = None):
         GroupBase.__init__(self)
         NamedItem.__init__(self, id)
-
-        self.s_align.valign = V_ALIGN_MIDDLE
-        self.n_align.valign = V_ALIGN_MIDDLE
 
         self._upper_bound = TextElement('value', '{ upperBound = %s }', '*')
         self.add(self._upper_bound)

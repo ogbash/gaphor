@@ -10,6 +10,7 @@ import gobject
 import diacanvas
 
 from gaphor.misc import uniqueid
+from gaphor.diagram.align import ItemAlign
 
 # Map UML elements to their (default) representation.
 _uml_to_item_map = { }
@@ -118,13 +119,14 @@ class DiagramItemMeta(gobject.GObjectMeta):
     3. If nessesary: add canvas groupable callbacks
     4. If nessesary: add canvas editable callbacks
     """
-    def __new__(cls, name, bases, data):
+    def __new__(self, name, bases, data):
+
         all_bases = set()
         for base in bases:
             all_bases = all_bases.union(set(inspect.getmro(base)))
 
-        item_class = gobject.GObjectMeta.__new__(cls, name, bases, data)
-        gobject.type_register(item_class)
+        cls = gobject.GObjectMeta.__new__(self, name, bases, data)
+        gobject.type_register(cls)
 
         if (diacanvas.CanvasItem in all_bases) or \
                 (diacanvas.CanvasGroup in all_bases) or \
@@ -133,24 +135,49 @@ class DiagramItemMeta(gobject.GObjectMeta):
                 (diacanvas.CanvasBox in all_bases) or \
                 (diacanvas.CanvasText in all_bases) or \
                 (diacanvas.CanvasImage in all_bases):
-            diacanvas.set_callbacks(item_class)
+            diacanvas.set_callbacks(cls)
 
         if diacanvas.CanvasGroupable in all_bases:
-            diacanvas.set_groupable(item_class)
+            diacanvas.set_groupable(cls)
 
         if (diacanvas.CanvasEditable in all_bases):
-            diacanvas.set_editable(item_class)
+            diacanvas.set_editable(cls)
 
         # map uml classes to diagram items
         if '__uml__' in data:
             obj = data['__uml__']
             if isinstance(obj, (tuple, set, list)):
                 for c in obj:
-                    set_diagram_item(c, item_class)
+                    set_diagram_item(c, cls)
             else:
-                set_diagram_item(obj, item_class)
+                set_diagram_item(obj, cls)
 
-        return item_class
+        return cls
+
+
+    def __init__(self, name, bases, data):
+        # stereotype align information
+        align = ItemAlign() # center, top
+        align.outside = getattr(self, '__o_align__', False)
+        if align.outside:
+            align.margin = (0, 2) * 4
+        else:
+            align.margin = (5, 30) * 2
+        self.set_cls_align('s', align, data)
+
+
+    def set_cls_align(self, kind, align, data):
+        assert kind in ('s', 'n')
+
+        hn = '__%s_align__' % kind
+        vn = '__%s_valign__' % kind
+
+        if hn in data:
+            align.align = data[hn]
+        if vn in data:
+            align.valign = data[vn]
+
+        setattr(self, '%s_align' % kind, align)
 
 
 

@@ -6,7 +6,7 @@ import gobject
 import pango
 import diacanvas
 from gaphor import UML
-from gaphor.diagram.align import ITEM_ALIGN_C
+from gaphor.diagram.align import V_ALIGN_MIDDLE
 from gaphor.diagram.diagramline import FreeLine
 from gaphor.diagram.groupable import GroupBase
 from gaphor.diagram.nameditem import NamedItem
@@ -53,9 +53,8 @@ class LifetimeItem(FreeLine):
 
 
 class LifelineItem(NamedItem, GroupBase):
-    __uml__ = UML.Lifeline
-
-    n_align = ITEM_ALIGN_C
+    __uml__      = UML.Lifeline
+    __s_valign__ = V_ALIGN_MIDDLE
 
     __gproperties__ = {
         'has-lifetime': (gobject.TYPE_BOOLEAN, 'has lifetime',

@@ -13,7 +13,6 @@ from gaphor import UML
 from gaphor.misc import uniqueid
 from gaphor.UML import Element, Presentation
 from gaphor.UML.properties import association
-from gaphor.diagram.align import ItemAlign
 
 STEREOTYPE_OPEN  = '\xc2\xab' # '<<'
 STEREOTYPE_CLOSE = '\xc2\xbb' # '>>'
@@ -79,11 +78,6 @@ class DiagramItem(Presentation):
         # parts of items to be drawn on diagram
         # can contain stereotype, etc.
         self._parts = set()
-
-        align = ItemAlign() # center, top
-        if not align.outside:
-            align.margin = (5, 30) * 2
-        self.s_align = align
 
 
     id = property(lambda self: self._id, doc='Id')

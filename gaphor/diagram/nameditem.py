@@ -183,9 +183,11 @@ from gaphor.interfaces import INamedItemView
 class Named(diacanvas.CanvasEditable):
     interface.implements(INamedItemView)
 
+    NAME_FONT = 'sans bold 10'
+
     def __init__(self):
         self._name = diacanvas.shape.Text()
-        self._name.set_font_description(pango.FontDescription(self.FONT))
+        self._name.set_font_description(pango.FontDescription(self.NAME_FONT))
         self._name.set_alignment(pango.ALIGN_CENTER)
         #self._name.set_wrap_mode(diacanvas.shape.WRAP_NONE)
         self._name.set_markup(False)
@@ -246,8 +248,31 @@ class Named(diacanvas.CanvasEditable):
         return iter([self._name])
 
 
+class NamedItemMeta(DiagramItemMeta):
+    def __new__(self, name, bases, data):
+        return DiagramItemMeta.__new__(self, name, bases, data)
+
+
+    def __init__(self, name, bases, data):
+        super(NamedItemMeta, self).__init__(name, bases, data)
+        align = ItemAlign() # center, top
+        align.outside = self.s_align.outside
+        if align.outside:
+            align.margin = (2, ) * 4
+        else:
+            align.margin = (15, 30) * 2
+        self.set_cls_align('n', align, data)
+
+        if not hasattr(self, '__n_align__'):
+            align.align = self.s_align.align
+
+        if not hasattr(self, '__n_valign__'):
+            align.valign = self.s_align.valign
+
+
 
 class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
+    __metaclass__ = NamedItemMeta
     __gproperties__ = {
         'name': (gobject.TYPE_STRING, 'name', '', '', gobject.PARAM_READWRITE)
     }
@@ -260,18 +285,10 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
     )
 
     # these values can be overriden
-    FONT = 'sans bold 10'
     WIDTH = 120
     HEIGHT = 60
 
     def __init__(self, id = None):
-        align = ItemAlign() # center, top
-        if align.outside:
-            align.margin = (2, ) * 4
-        else:
-            align.margin = (15, 30) * 2
-        self.n_align = align
-
         ElementItem.__init__(self, id)
         Named.__init__(self)
 
