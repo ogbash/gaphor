@@ -32,8 +32,10 @@ class InterfaceItem(ClassItem, SimpleRotation):
           handle. Stop drawing the line 'x' points earlier. 
     """
 
-    __uml__ = UML.Interface
     __metaclass__ = GObjectPropsMerge # merge properties from SimpleRotation
+
+    __uml__        = UML.Interface
+    __stereotype__ = 'interface'
 
     def __init__(self, id=None):
         ClassItem.__init__(self, id)
@@ -105,11 +107,6 @@ class InterfaceItem(ClassItem, SimpleRotation):
 
     def is_folded(self):
         return self.drawing_style == self.DRAW_ICON
-
-
-    def update_stereotype(self):
-        if not ClassItem.update_stereotype(self):
-            self.set_stereotype('interface')
 
  
     def update_icon(self, affine):

@@ -249,16 +249,15 @@ class Named(diacanvas.CanvasEditable):
 
 
 class NamedItemMeta(DiagramItemMeta):
-    def __new__(self, name, bases, data):
-        return DiagramItemMeta.__new__(self, name, bases, data)
-
-
     def __init__(self, name, bases, data):
         super(NamedItemMeta, self).__init__(name, bases, data)
         align = ItemAlign() # center, top
         align.outside = self.s_align.outside
         if align.outside:
             align.margin = (2, ) * 4
+        if data.get('__icon__', False):
+            align.margin = (30, 35, 10, 35) 
+            self.s_align.margin = (30, 35, 10, 35) 
         else:
             align.margin = (15, 30) * 2
         self.set_cls_align('n', align, data)
@@ -377,6 +376,6 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
 
 
     def on_shape_iter(self):
-        return itertools.chain([self._border],
+        return itertools.chain((self._border, ),
             Named.on_shape_iter(self),
             ElementItem.on_shape_iter(self))

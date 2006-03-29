@@ -1,6 +1,9 @@
 ======== stereotypes branch =========
 - namedelement.py: from NamedElement
-- items.tex: describe __uml__ and __fixed_stereotype__
+- items.tex: describe:
+  - __uml__
+  - __stereotype__
+  - __fixed_stereotype__
 ===== end of stereotypes branch =====
 
 ======= 0.8.0 ========

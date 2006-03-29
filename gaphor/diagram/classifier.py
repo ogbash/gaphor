@@ -14,9 +14,10 @@ import diacanvas
 from gaphor import UML
 from gaphor.i18n import _
 
-from gaphor.diagram.nameditem import NamedItem
+from gaphor.diagram.nameditem import NamedItem, NamedItemMeta
 from gaphor.diagram.feature import FeatureItem
 from gaphor.diagram.align import MARGIN_TOP, MARGIN_RIGHT, MARGIN_BOTTOM, MARGIN_LEFT
+
 
 class Compartment(list):
     """Specify a compartment in a class item.
@@ -94,13 +95,10 @@ class ClassifierItem(NamedItem):
 
     To support this behavior a few helper methods are defined which can be
     called/overridden:
-     - update_compartment (the standard box-style)
      - update_compartment_icon (box-style with small icon (see ComponentItem))
-     - update_compartment_common (update parts used in both methods)
      - update_icon (does nothing by default, an impl. should be provided by
                     subclasses (see ActorItem))
     """
-
     # Draw the famous box style
     DRAW_COMPARTMENT = 0
     # Draw compartment with little icon in upper right corner
@@ -113,17 +111,15 @@ class ClassifierItem(NamedItem):
                             'set the drawing style for the classifier',
                             0, 2, 0, gobject.PARAM_READWRITE),
     }
-    HEAD_MARGIN_X = 30
-    HEAD_MARGIN_Y = 10
+
     # Default size for small icons
     ICON_WIDTH    = 15
     ICON_HEIGHT   = 25
     ICON_MARGIN_X = 10
     ICON_MARGIN_Y = 10
 
-    FONT_STEREOTYPE='sans 10'
-    FONT_ABSTRACT='sans bold italic 10'
-    FROM_FONT='sans 8'
+    FONT_ABSTRACT   = 'sans bold italic 10'
+    FONT_FROM       = 'sans 8'
 
     def __init__(self, id=None):
         NamedItem.__init__(self, id)
@@ -135,7 +131,7 @@ class ClassifierItem(NamedItem):
         self._border.set_line_width(2.0)
 
         self._from = diacanvas.shape.Text()
-        self._from.set_font_description(pango.FontDescription(ClassifierItem.FROM_FONT))
+        self._from.set_font_description(pango.FontDescription(ClassifierItem.FONT_FROM))
         self._from.set_alignment(pango.ALIGN_CENTER)
         self._from.set_markup(False)
 
@@ -266,10 +262,14 @@ class ClassifierItem(NamedItem):
         # determine width and height of comparments
         if self._drawing_style == self.DRAW_COMPARTMENT:
             sizes = [comp.get_size() for comp in self._compartments]
-            width = max(map(lambda p: p[0], sizes)) + Compartment.MARGIN_X * 2
-            height = sum(map(lambda p: p[1], sizes))
 
-            height += len(self._compartments) * Compartment.MARGIN_Y * 2
+            if sizes:
+                width = max(map(lambda p: p[0], sizes)) + Compartment.MARGIN_X * 2
+
+                height = sum(map(lambda p: p[1], sizes))
+                height += len(self._compartments) * Compartment.MARGIN_Y * 2
+            else:
+                width = height = 0
 
         align, nx, ny, name_width, name_height = NamedItem.update_name(self, affine)
 
@@ -298,12 +298,22 @@ class ClassifierItem(NamedItem):
     def update_compartment_icon(self, affine):
         """Update state for box-style w/ small icon.
         """
-        self.update_compartment_common(affine, self.ICON_WIDTH, self.ICON_HEIGHT + self.ICON_MARGIN_Y)
+        pass
+
 
     def update_icon(self, affine):
         """Update state to draw as one bug icon.
         """
         pass
+
+
+    def get_icon_pos(self):
+        """
+        Get icon position.
+        """
+        return self.width - self.ICON_MARGIN_X - self.ICON_WIDTH, \
+            self.ICON_MARGIN_Y
+
 
     def on_update(self, affine):
         """Overrides update callback.
@@ -314,6 +324,7 @@ class ClassifierItem(NamedItem):
             self.update_icon(affine)
 
         NamedItem.on_update(self, affine)
+
 
     def on_shape_iter(self):
         if self._drawing_style in (self.DRAW_COMPARTMENT, self.DRAW_COMPARTMENT_ICON):

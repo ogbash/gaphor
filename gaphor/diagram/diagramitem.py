@@ -465,15 +465,22 @@ class DiagramItem(Presentation):
         if fixed:
             self.set_stereotype(fixed)
         else:
+            # by default no stereotype, however check for __stereotype__
+            # attribute to assign some static (but not fixed) stereotype
+            # see interfaces for example
+            s = getattr(self, '__stereotype__', None)
+
             if applied_stereotype:
                 # generate string with stereotype names separated by coma
-                s = ', '.join(stereotype_name(s.name) for s in applied_stereotype)
+                sl = ', '.join(stereotype_name(s.name) for s in applied_stereotype)
+                if s:
+                    s = '%s, %s' % (s, sl)
+                else:
+                    s = sl
 
-                # Phew!
-                self.set_stereotype(s)
-                return True
-            else:
-                self.set_stereotype(None)
+            # Phew! :]
+            self.set_stereotype(s)
+
         self.request_update()
 
 
@@ -495,12 +502,14 @@ class DiagramItem(Presentation):
 
             subject = self.subject
             for cls, stereotype in self.__fixed_stereotype__.items():
-                pre = True
-                # if there is additional predicate, then check subject
-                if isinstance(stereotype, tuple):
-                    stereotype, predicate = stereotype
-                    assert callable(predicate)
-                    pre = predicate(subject)
+                if isinstance(subject, cls):
+                    # if there is additional predicate, then check subject
+                    if isinstance(stereotype, tuple):
+                        stereotype, predicate = stereotype
 
-                if pre and isinstance(subject, cls):
-                    return stereotype
+                        assert callable(predicate)
+
+                        if predicate(subject):
+                            return stereotype
+                    else:
+                        return stereotype
