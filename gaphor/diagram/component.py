@@ -30,7 +30,7 @@ class ComponentItem(ClassifierItem):
             shape.set_fill_color(diacanvas.color(255, 255, 255))
             setattr(self, attr, shape)
 
-        self._parts.update((self._component_icon,
+        self._shapes.update((self._component_icon,
             self._lower_bar,
             self._upper_bar))
 

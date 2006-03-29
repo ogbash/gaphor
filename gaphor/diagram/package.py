@@ -27,7 +27,7 @@ class PackageItem(NamedItem):
 
         self._border = diacanvas.shape.Path()
         self._border.set_line_width(2.0)
-        self._parts.add(self._border)
+        self._shapes.add(self._border)
 
         self.set(height = 50, width = 100)
 

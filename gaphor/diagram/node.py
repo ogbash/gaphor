@@ -21,7 +21,7 @@ class NodeItem(ClassifierItem):
             shape.set_line_width(2.0)
             setattr(self, attr, shape)
 
-        self._parts.update((self._back, self._diag_line))
+        self._shapes.update((self._back, self._diag_line))
 
 
     def on_update(self, affine):

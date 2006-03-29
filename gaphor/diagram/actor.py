@@ -50,7 +50,7 @@ class ActorItem(ClassifierItem):
         self._legs = diacanvas.shape.Path()
         self._legs.set_line_width(2.0)
 
-        self._parts.update((self._head, self._body,
+        self._shapes.update((self._head, self._body,
             self._arms, self._legs))
 
 

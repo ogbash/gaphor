@@ -24,7 +24,7 @@ class ArtifactItem(ClassifierItem):
         self._note.set_line_width(1.0)
         self._note.set_fill(True)
         self._note.set_fill_color(diacanvas.color(255, 255, 255))
-        self._parts.add(self._note)
+        self._shapes.add(self._note)
 
 
     def update_compartment_icon(self, affine):

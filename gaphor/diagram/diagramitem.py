@@ -77,7 +77,7 @@ class DiagramItem(Presentation):
 
         # parts of items to be drawn on diagram
         # can contain stereotype, etc.
-        self._parts = set()
+        self._shapes = set()
 
 
     id = property(lambda self: self._id, doc='Id')
@@ -433,11 +433,11 @@ class DiagramItem(Presentation):
         if text:
             self._stereotype.set_text(STEREOTYPE_OPEN + text + STEREOTYPE_CLOSE)
             self._has_stereotype = True
-            self._parts.add(self._stereotype)
+            self._shapes.add(self._stereotype)
         else:
             self._has_stereotype = False
-            if self._stereotype in self._parts:
-                self._parts.remove(self._stereotype)
+            if self._stereotype in self._shapes:
+                self._shapes.remove(self._stereotype)
         self.request_update()
 
 

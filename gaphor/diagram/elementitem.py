@@ -73,4 +73,4 @@ class ElementItem(diacanvas.CanvasElement, DiagramItem):
 
 
     def on_shape_iter(self):
-        return iter(self._parts)
+        return iter(self._shapes)
