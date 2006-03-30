@@ -35,7 +35,7 @@ class ClassItem(ClassifierItem, diacanvas.CanvasGroupable):
     __uml__ = UML.Class, UML.Stereotype
     __fixed_stereotype__ = {
         UML.Stereotype: 'stereotype',
-        UML.Class     : ('metaclass', lambda subject: subject.extension),
+        UML.Class     : ('metaclass', lambda self: self.subject.extension),
     }
     
     __gproperties__ = {
@@ -50,7 +50,6 @@ class ClassItem(ClassifierItem, diacanvas.CanvasGroupable):
     popup_menu = ClassifierItem.popup_menu + (
         'separator',
         'AbstractClass',
-#        'Stereotype', stereotype_list,
         'Fold',
         'separator',
         'CreateAttribute',

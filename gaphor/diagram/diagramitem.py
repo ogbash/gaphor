@@ -468,18 +468,20 @@ class DiagramItem(Presentation):
             # by default no stereotype, however check for __stereotype__
             # attribute to assign some static (but not fixed) stereotype
             # see interfaces for example
-            s = getattr(self, '__stereotype__', None)
+            stereotype = getattr(self, '__stereotype__', None)
+            if stereotype:
+                stereotype = pget(self, stereotype)
 
             if applied_stereotype:
                 # generate string with stereotype names separated by coma
                 sl = ', '.join(stereotype_name(s.name) for s in applied_stereotype)
-                if s:
-                    s = '%s, %s' % (s, sl)
+                if stereotype:
+                    stereotype = '%s, %s' % (stereotype, sl)
                 else:
-                    s = sl
+                    stereotype = sl
 
             # Phew! :]
-            self.set_stereotype(s)
+            self.set_stereotype(stereotype)
 
         self.request_update()
 
@@ -490,6 +492,7 @@ class DiagramItem(Presentation):
     @staticmethod
     def get_text_size(text):
         return text.to_pango_layout(True).get_pixel_size()
+
 
     def get_fixed_stereotype(self):
         """
@@ -503,13 +506,18 @@ class DiagramItem(Presentation):
             subject = self.subject
             for cls, stereotype in self.__fixed_stereotype__.items():
                 if isinstance(subject, cls):
-                    # if there is additional predicate, then check subject
-                    if isinstance(stereotype, tuple):
-                        stereotype, predicate = stereotype
-
-                        assert callable(predicate)
-
-                        if predicate(subject):
-                            return stereotype
-                    else:
+                    stereotype = pget(self, stereotype)
+                    if stereotype:
                         return stereotype
+
+
+def pget(self, value):
+    # if there is additional predicate, then check subject
+    if isinstance(value, tuple):
+        value, predicate = value
+        assert callable(predicate)
+
+        if not predicate(self):
+            value = None
+
+    return value
