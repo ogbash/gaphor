@@ -292,6 +292,7 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
         Named.__init__(self)
 
         self._border = self.create_border()
+        self._shapes.add(self._border)
 
 
     def create_border(self, border = None):
@@ -376,6 +377,5 @@ class NamedItem(ElementItem, Named, diacanvas.CanvasEditable):
 
 
     def on_shape_iter(self):
-        return itertools.chain((self._border, ),
-            Named.on_shape_iter(self),
+        return itertools.chain(Named.on_shape_iter(self),
             ElementItem.on_shape_iter(self))
