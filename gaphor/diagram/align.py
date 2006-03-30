@@ -37,6 +37,13 @@ class ItemAlign(object):
             setattr(self, k, v)
 
 
+    def copy(self):
+        """
+        Return shallow copy of align object.
+        """
+        return ItemAlign(**self.__dict__)
+
+
     def get_pos(self, text, width, height, iwidth, iheight):
         if self.outside:
             if self.align == H_ALIGN_LEFT:
