@@ -1,50 +1,127 @@
-\documentclass{article}
-\usepackage{geometry}
+\documentclass[draft]{article}
+\usepackage[papername = a4paper, margin = 3cm]{geometry}
 \usepackage{graphicx}
 \usepackage{hyperref}
-
-\geometry{papername = a4paper, margin = 3cm}
 
 \title{Gaphor Diagram Item Model}
 \author{wrobell@pld-linux.org}
 
-\newcommand{\module}[1]{\texttt{#1}}
-\newcommand{\class}[1]{\texttt{#1}}
-\newcommand{\attr}[1]{\texttt{#1}}
-\newcommand{\stereotype}[1]{\texttt{<<#1>>}}
+\newcommand{\rmodule}[1]{\texttt{#1}}
+\newcommand{\rclass}[1]{\texttt{#1}}
+\newcommand{\rattr}[1]{\texttt{#1}}
+\newcommand{\rstereotype}[1]{\texttt{<<#1>>}}
 \newcommand{\warning}[1]{\textbf{WARNING:~#1}}
+
+%\newenvironment{description}
+%               {\list{}{\labelwidth\z@ \itemindent-\leftmargin
+%                        \let\makelabel\descriptionlabel}}
+%               {\endlist}
+%\newcommand*\descriptionlabel[1]{\hspace\labelsep
+%                                \normalfont\bfseries #1}
+
+% length class, method and attribute block descriptions
+\newlength{\dscwidth}
+\setlength{\dscwidth}{\textwidth}
+\addtolength{\dscwidth}{-7em}
+
+\newlength{\abdscwidth}
+\setlength{\abdscwidth}{\textwidth}
+\addtolength{\abdscwidth}{-5em}
+
+\newlength{\adscwidth}
+\setlength{\adscwidth}{\textwidth}
+\addtolength{\adscwidth}{-9em}
+
+\newcommand{\dlabel}[1]{\par\noindent\makebox[6em][r]{\textbf{#1:}}\hspace{1em}}
+
+\newenvironment{entitydesc}{%
+\dlabel{Description}%
+\begin{minipage}[t]{\dscwidth}
+}{%
+\end{minipage}
+}
+
+\newcommand{\pre}{\dlabel{Pre}~}
+\newcommand{\post}{\dlabel{Post}~}
+
+\newenvironment{slist}{%
+    \begin{list}{-}{%
+        \setlength{\labelwidth}{3pt}%
+        \setlength{\leftmargin}{1em}%
+        \setlength{\labelsep}{2pt}%
+        \setlength{\rightmargin}{0pt}%
+        \setlength{\itemsep}{0pt}%
+        \setlength{\parsep}{0pt}%
+        \setlength{\topsep}{2pt}%
+        \setlength{\partopsep}{0pt}%
+    }%
+}{%
+    \end{list}%\vspace{3pt}%
+}
+
+% class
+\newenvironment{class}[1]{%
+\dlabel{\underline{Class}}\texttt{#1}
+}{%
+\par
+}
+
+% attributes
+\newenvironment{attrs}{%
+\\[1ex]
+\noindent\hspace*{5em}\begin{minipage}[t]{\abdscwidth}
+}{%
+\end{minipage}\\[-2ex]
+}
+
+\newcommand{\iattr}[2]{%
+\makebox[3em][r]{\texttt{#1}:}\hspace*{1em}%
+\begin{minipage}[t]{\adscwidth}
+#2%
+\end{minipage}\\
+}
+
+% methods
+\newenvironment{method}[1]{%
+\vspace*{2ex}
+\dlabel{\underline{Method}}\texttt{#1}
+}{%
+\par
+}
 
 \begin{document}
 \maketitle
 
 \section{Basic Classes of Diagram Items}
+\begin{class}{DiagramItem}
+\begin{attrs}
+\iattr{subject}{reference to UML class instance}
+\iattr{popup\_menu}{item popup menu definition, i.e. rename, delete, etc.}
+\end{attrs}
+\begin{entitydesc}
+Basic class for all diagram items.
 
-DiagramItem is a basic class for all items.
-
-Attributes:
-\begin{description}
-\item[subject] UML class
-\item[popup\_menu] item popup menu definition, i.e. rename, delete, add
-  attribute, etc.
-\end{description}
-
-Methods:
-\begin{description}
-\item[set\_subject] assign UML class to an item
-\end{description}
-
-\subsection{Relationship Between DiagramItem Object and UML Class}
-
-There is one to one association between item and UML class in DiagramItem
-class.
-
-DiagramItem.subject attribute can be None as in case of LifetimeItem or
+Subject is one to one association
+but can be \texttt{None} as in case of LifetimeItem or
 CommentLine items.
+It can also visualize more than one UML class (see UML
+specification), for example
+\begin{slist}
+\itemsep0pt
+\item DecisionNodeItem items can represent combined decision and merge nodes
+\item ForkNodeItem items can represent fork and join nodes 
+\end{slist}
+\end{entitydesc}
+\end{class}
 
-DiagramItem can also visualize more than one UML class, for example
-DecisionNodeItem items can represent combined decsion and merge nodes or
-ForkNodeItem items can represent fork and join nodes (see UML
-specification).
+\begin{method}{DiagramItem.set\_subject}
+\begin{attrs}
+\iattr{subject}{reference to UML class instance}
+\end{attrs}
+\begin{entitydesc}
+assign UML class instance to an item
+\end{entitydesc}
+\end{method}
 
 \subsection{Items and Diacanvas}
 Diacanvas library supports different canvas objects
@@ -135,7 +212,7 @@ figure~\ref{items:example:flow})
 \end{itemize}
 
 Element of items are aligned according to attributes of
-\class{ItemAlign} and \class{LineAlign} classes. Align information is
+\rclass{ItemAlign} and \rclass{LineAlign} classes. Align information is
 assigned to every item element, but position is calculated from item
 perspective, for example
 \begin{itemize}
@@ -155,21 +232,21 @@ See figure~\ref{items:align} for more examples.
 \caption{Align of Item Elements}\label{items:align}
 \end{figure}
 
-Align constants and classes are defined in \module{gaphor::diagram::align} module.
+Align constants and classes are defined in \rmodule{gaphor::diagram::align} module.
 
 \subsection{Stereotype and Name Align}
 
 There are two important elements of items
 \begin{itemize}
 \item every item shown on diagram has stereotype (even item for Stereotype
-    UML class, which stereotype is \stereotype{stereotype})
+    UML class, which stereotype is \rstereotype{stereotype})
 \item many items has names
 \end{itemize}
 
-Therefore every item class has \attr{s\_align} attribute, which defines
+Therefore every item class has \rattr{s\_align} attribute, which defines
 align of stereotypes.
 
-Named items are aligned according to \attr{n\_align} attribute. If
+Named items are aligned according to \rattr{n\_align} attribute. If
 stereotype and name align values are the same, then name is put
 centered under stereotype.
 
