@@ -4,7 +4,7 @@ Use case inclusion relationship.
 
 from gaphor import resource
 from gaphor import UML
-from gaphor.diagram.relationship import DiagramLine
+from gaphor.diagram.diagramline import DiagramLine
 
 class IncludeItem(DiagramLine):
     """
