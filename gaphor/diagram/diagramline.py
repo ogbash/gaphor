@@ -1,6 +1,8 @@
-# vim:sw=4:et
-"""Basic functionality for line-like objects on a diagram.
 """
+Basic functionality for canvas line based items on a diagram.
+"""
+
+import itertools
 
 import diacanvas
 from diagramitem import DiagramItem
@@ -77,6 +79,40 @@ class LineItem(diacanvas.CanvasLine, DiagramItem):
         return self._on_disconnect_handle(handle, diacanvas.CanvasLine)
 
 
+    def on_update (self, affine):
+        diacanvas.CanvasLine.on_update(self, affine)
+
+        # update stereotype
+        # fixme: use util function
+        sw, sh = self._stereotype.to_pango_layout(True).get_pixel_size()
+
+        handles = self.handles
+        middle = len(handles)/2
+        p1 = handles[middle-1].get_pos_i()
+        p2 = handles[middle].get_pos_i()
+
+        x = p1[0] > p2[0] and sw + 2 or -2
+        x = (p1[0] + p2[0]) / 2.0 - x
+        y = p1[1] <= p2[1] and sh or 0
+        y = (p1[1] + p2[1]) / 2.0 - y
+
+        self._stereotype.set_pos((x, y))
+        self._stereotype.set_max_width(sw)
+        self._stereotype.set_max_height(sh)
+
+        b1 = x, y, sw, sh
+
+        b2 = self.bounds
+        self.set_bounds((min(b1[0], b2[0]), min(b1[1], b2[1]),
+                         max(b1[2] + b1[0], b2[2]), max(b1[3] + b1[1], b2[3])))
+
+        self.update_stereotype()
+
+
+    def on_shape_iter(self):
+        return itertools.chain(diacanvas.CanvasLine.on_shape_iter(self), self._shapes)
+
+
 
 class DiagramLine(LineItem):
     """
@@ -84,7 +120,8 @@ class DiagramLine(LineItem):
     menu.
     """
 
-    popup_menu = (
+    popup_menu = LineItem.popup_menu + (
+        'separator', 
         'AddSegment',
         'DeleteSegment',
         'Orthogonal',
@@ -171,3 +208,5 @@ class FreeLine(LineItem):
         self._handle.set_pos_i(*self._handle.get_pos_i()) # really strange, but we have to do this
 
         LineItem.on_update(self, affine)
+
+# vim:sw=4:et

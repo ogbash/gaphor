@@ -231,8 +231,11 @@ class DiagramItem(Presentation):
         stereotype_list[:] = []
 
         if self.get_fixed_stereotype():
-            pass
-        else:
+            pass # do nothing in case of fixed stereotype
+        elif subject:
+            # look for stereotypes to put them into context menu of an item
+            # this can be only done when subject exists
+
             from itemactions import ApplyStereotypeAction, register_action
 
             cls = type(subject)
@@ -240,8 +243,9 @@ class DiagramItem(Presentation):
             # find out names of classes, which are superclasses of our
             # subject
             names = set(c.__name__ for c in cls.__mro__ if issubclass(c, Element))
-            # Find stereotypes that extend out metaclass
-            classes = self._subject._factory.select(lambda e: e.isKindOf(UML.Class) and e.name in names)
+
+            # find stereotypes that extend out metaclass
+            classes = subject._factory.select(lambda e: e.isKindOf(UML.Class) and e.name in names)
 
             for class_ in classes:
                 for extension in class_.extension:
@@ -448,8 +452,10 @@ class DiagramItem(Presentation):
         Note, that this method is also called from
         ExtensionItem.confirm_connect_handle method.
         """
-        subject = self.subject
-        applied_stereotype = subject.appliedStereotype
+        if self.subject:
+            applied_stereotype = self.subject.appliedStereotype
+        else:
+            applied_stereotype = None
 
         def stereotype_name(name):
             """
@@ -511,13 +517,19 @@ class DiagramItem(Presentation):
                         return stereotype
 
 
-def pget(self, value):
-    # if there is additional predicate, then check subject
+def pget(obj, value):
+    """
+    Return value if not a tuple.
+
+    If value is tuple, then it is divided into two parts value and
+    predicate. Then value is returned if predicate(obj) returns true.
+    Otherwise None is returned.
+    """
     if isinstance(value, tuple):
         value, predicate = value
         assert callable(predicate)
 
-        if not predicate(self):
+        if not predicate(obj):
             value = None
 
     return value

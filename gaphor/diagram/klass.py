@@ -5,10 +5,7 @@
 # TODO: make loading of features work (adjust on_groupable_add)
 #       probably best to do is subclass Feature in OperationItem and A.Item
 
-from __future__ import generators
-
 import gobject
-import pango
 import diacanvas
 
 from gaphor import UML
