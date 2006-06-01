@@ -28,7 +28,7 @@ class InterfaceItem(ClassItem, SimpleRotation):
     __metaclass__ = GObjectPropsMerge # merge properties from SimpleRotation
 
     __uml__        = UML.Interface
-    __stereotype__ = 'interface', lambda self: self.drawing_style != self.DRAW_ICON
+    __stereotype__ = {'interface': lambda self: self.drawing_style != self.DRAW_ICON}
 
     def __init__(self, id=None):
         ClassItem.__init__(self, id)

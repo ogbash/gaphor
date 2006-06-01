@@ -230,9 +230,8 @@ class DiagramItem(Presentation):
         stereotype_list = self.stereotype_list
         stereotype_list[:] = []
 
-        if self.get_fixed_stereotype():
-            pass # do nothing in case of fixed stereotype
-        elif subject:
+        # UML specs does not allow to extend stereotypes with stereotypes
+        if subject and not isinstance(subject, UML.Stereotype):
             # look for stereotypes to put them into context menu of an item
             # this can be only done when subject exists
 
@@ -467,27 +466,23 @@ class DiagramItem(Presentation):
             else:
                 return name[0].lower() + name[1:]
 
-        fixed = self.get_fixed_stereotype()            
-        if fixed:
-            self.set_stereotype(fixed)
-        else:
-            # by default no stereotype, however check for __stereotype__
-            # attribute to assign some static (but not fixed) stereotype
-            # see interfaces for example
-            stereotype = getattr(self, '__stereotype__', None)
+        # by default no stereotype, however check for __stereotype__
+        # attribute to assign some static stereotype see interfaces,
+        # use case relationships, package or class for examples
+        stereotype = getattr(self, '__stereotype__', None)
+        if stereotype:
+            stereotype = self.parse_stereotype(stereotype)
+
+        if applied_stereotype:
+            # generate string with stereotype names separated by coma
+            sl = ', '.join(stereotype_name(s.name) for s in applied_stereotype)
             if stereotype:
-                stereotype = pget(self, stereotype)
+                stereotype = '%s, %s' % (stereotype, sl)
+            else:
+                stereotype = sl
 
-            if applied_stereotype:
-                # generate string with stereotype names separated by coma
-                sl = ', '.join(stereotype_name(s.name) for s in applied_stereotype)
-                if stereotype:
-                    stereotype = '%s, %s' % (stereotype, sl)
-                else:
-                    stereotype = sl
-
-            # Phew! :]
-            self.set_stereotype(stereotype)
+        # Phew! :]
+        self.set_stereotype(stereotype)
 
         self.request_update()
 
@@ -500,36 +495,30 @@ class DiagramItem(Presentation):
         return text.to_pango_layout(True).get_pixel_size()
 
 
-    def get_fixed_stereotype(self):
-        """
-        Check for fixed stereotypes. If any should be applied, then return
-        stereotype text, otherwise None is returned.
-        """
-        if hasattr(self, '__fixed_stereotype__'):
+    def parse_stereotype(self, data):
+        if isinstance(data, str): # return data as stereotype if it is a string
+            return data
 
-            assert isinstance(self.__fixed_stereotype__, dict)
+        subject = self.subject
 
-            subject = self.subject
-            for cls, stereotype in self.__fixed_stereotype__.items():
-                if isinstance(subject, cls):
-                    stereotype = pget(self, stereotype)
-                    if stereotype:
-                        return stereotype
+        for stereotype, condition in data.items():
+            if isinstance(condition, tuple):
+                cls, predicate = condition
+            elif isinstance(condition, type):
+                cls = condition
+                predicate = None
+            elif callable(condition):
+                cls = None
+                predicate = condition
+            else:
+                assert False, 'wrong conditional %s' % condition
 
+            ok = True
+            if cls:
+                ok = isinstance(subject, cls)
+            if predicate:
+                ok = predicate(self)
 
-def pget(obj, value):
-    """
-    Return value if not a tuple.
-
-    If value is tuple, then it is divided into two parts value and
-    predicate. Then value is returned if predicate(obj) returns true.
-    Otherwise None is returned.
-    """
-    if isinstance(value, tuple):
-        value, predicate = value
-        assert callable(predicate)
-
-        if not predicate(obj):
-            value = None
-
-    return value
+            if ok:
+                return stereotype
+        return None

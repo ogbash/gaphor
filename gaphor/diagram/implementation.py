@@ -1,7 +1,6 @@
-'''
-Implementation - - - -|>
-'''
-# vim:sw=4
+"""
+Implementation of interface.
+"""
 
 from gaphor import resource
 from gaphor import UML
@@ -90,3 +89,5 @@ class ImplementationItem(DiagramLine):
             self.set(**self.default_look)
 
         DiagramLine.on_update(self, affine)
+
+# vim:sw=4

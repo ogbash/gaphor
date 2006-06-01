@@ -30,9 +30,9 @@ class ClassItem(ClassifierItem, diacanvas.CanvasGroupable):
     interface.implements(IClassView)
 
     __uml__ = UML.Class, UML.Stereotype
-    __fixed_stereotype__ = {
-        UML.Stereotype: 'stereotype',
-        UML.Class     : ('metaclass', lambda self: self.subject.extension),
+    __stereotype__ = {
+        'stereotype': UML.Stereotype,
+         'metaclass': (UML.Class, lambda self: hasattr(self.subject, 'extension') and self.subject.extension),
     }
     
     __gproperties__ = {

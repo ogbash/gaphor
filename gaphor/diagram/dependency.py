@@ -1,22 +1,12 @@
-'''
-Dependency -- 
-'''
-# vim:sw=4:et
-
-from __future__ import generators
-
-import math
-import gobject
-import pango
-import diacanvas
+"""
+Common dependencies likeq dependency, usage, realization and implementation.
+"""
 
 from gaphor import resource, UML
 
 from gaphor.diagram import Relationship
 from gaphor.diagram.diagramline import DiagramLine
 
-STEREOTYPE_OPEN = '\xc2\xab' # '<<'
-STEREOTYPE_CLOSE = '\xc2\xbb' # '>>'
 
 class DependencyRelationship(Relationship):
     """
@@ -106,10 +96,11 @@ class DependencyItem(DiagramLine):
 
 
     def get_popup_menu(self):
+        menu = DiagramLine.get_popup_menu(self)
         if self.subject:
-            return self.popup_menu
+            return menu
         else:
-            return self.popup_menu + self.dependency_popup_menu
+            return menu + self.dependency_popup_menu
 
 
     def get_dependency_type(self):
@@ -227,3 +218,5 @@ def determine_dependency_type(ts, hs):
     elif is_realization(ts, hs):
         dt = UML.Realization
     return dt
+
+# vim:sw=4:et

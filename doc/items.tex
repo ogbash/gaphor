@@ -162,8 +162,7 @@ supported with classes
 \begin{class}{DiagramItemMeta}
 \begin{attrs}
 \iattr{\_\_uml\_\_}{UML class associated with item}
-\iattr{\_\_stereotype\_\_}{item basic stereotype}
-\iattr{\_\_fixed\_stereotype\_\_}{item fixed stereotype}
+\iattr{\_\_stereotype\_\_}{item static stereotype}
 \iattr{s\_align}{stereotype align}
 \end{attrs}
 \begin{entitydesc}
@@ -327,16 +326,9 @@ DependencyRelationship and AssociationRelationship classes for examples.
 \chapter{Glossary}
 
 \begin{description}
-\item[basic stereotype] stereotype, which is always assigned
+\item[static stereotype] stereotype, which is always assigned
     to an item; for example interface item is annotated with
-    \rstereotype{interface} stereotype; it is possible to annotate an item
-    with other stereotypes if it has basic stereotype
-
-\item[fixed stereotype] stereotype of an item, which cannot be changed;
-    for example profile item can have only \rstereotype{profile}
-    stereotype, metaclass item can have only \rstereotype{metaclass}
-    stereotype; it is not possible to annotate an item with other
-    stereotypes if there is fixed stereotype assigned
+    \rstereotype{interface} stereotype
 
 \item[item] item put on diagram by user, i.e. ClassItem, AssociationItem;
     conforms to UML notation of UML metamodel classes
