@@ -19,8 +19,9 @@ def when_i_load_the_model(step, filename):
 def when_i_open_diagram(step, name):
     pass
 
-@step('I have (\d+) opened diagrams?')
-def then_i_have_n_opened_diagrams(self, n):
+@step('I have (\d+) opene?d? diagrams?')
+def have_n_open_diagrams(self, n):
     n = int(n)
+
 
 # vim:sw=4:et:ai
