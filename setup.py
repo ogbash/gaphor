@@ -135,6 +135,7 @@ It uses the GTK+ environment for user interaction.
 
     setup_requires = [
         'nose >= 0.10.4',
+        'lettuce >= 0.1.5',
         'setuptools-git >= 0.3.4'
     ],
 
