@@ -1,26 +1,33 @@
-from lettuce import *
+from freshen import *
 from gaphor.application import Application
 
-@before.each_feature
-def setup_application(step):
+@Before
+def setup_application(sc):
+    print 'App init'
     Application.init()
+    print 'App init done'
 
-@after.each_feature
-def shutdown_application(step):
+@After
+def shutdown_application(sc):
+    print 'App shitdown'
     Application.get_service('element_factory').shutdown()
     Application.shutdown()
+    print 'App shitdown done'
 
-@step('I load the model "([^"]+)"')
-def when_i_load_the_model(step, filename):
+@Given('I load the model "([^"]+)"')
+def when_i_load_the_model(filename):
+    print 'step 1'
     from gaphor.storage.storage import load
     load(filename, Application.get_service('element_factory'))
 
-@step('I open diagram "([^"]+)"')
-def when_i_open_diagram(step, name):
+@When('I open diagram "([^"]+)"')
+def when_i_open_diagram(name):
+    print 'step 2'
     pass
 
-@step('I have (\d+) opene?d? diagrams?')
-def have_n_open_diagrams(self, n):
+@Then('I have (\d+) opene?d? diagrams?')
+def have_n_open_diagrams(n):
+    print 'step 3'
     n = int(n)
 
 
