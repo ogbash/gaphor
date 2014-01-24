@@ -75,4 +75,40 @@ class HistoryPseudostateItem(VertexItem):
         cr.stroke()
         text_center(cr, r, r, "H", self.style.name_font)
 
+class ChoicePseudostateItem(VertexItem):
+    """
+    Choice pseudostate diagram item.
+    """
+    __uml__   = UML.Pseudostate
+    __style__ = {
+        'min-size':   (30, 30),
+        'name-align': (ALIGN_LEFT, ALIGN_TOP),
+        'name-padding': (2, 2, 2, 2),
+        'name-outside': True,
+    }
+
+    RADIUS = 15
+    def __init__(self, id=None):
+        super(ChoicePseudostateItem, self).__init__(id)
+        for h in self.handles():
+            h.movable = False
+
+
+    def draw(self, context):
+        """
+        Draw choice pseudostate symbol.
+        """
+        super(ChoicePseudostateItem, self).draw(context)
+        cr = context.cairo
+        r = self.RADIUS
+        cr.move_to(0,r)
+        cr.line_to(r,0)
+        cr.line_to(2*r,r)
+        cr.line_to(r,2*r)
+        cr.line_to(0,r)
+        #path_ellipse(cr, r, r, d, d)
+        #cr.set_line_width(0.5)
+        cr.stroke()
+        #text_center(cr, r, r, "H", self.style.name_font)
+
 # vim:sw=4:et

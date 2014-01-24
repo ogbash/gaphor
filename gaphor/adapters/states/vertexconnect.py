@@ -100,4 +100,10 @@ class HistoryPseudostateTransitionConnect(VertexConnect):
 
 component.provideAdapter(HistoryPseudostateTransitionConnect)
 
+# Choice pseudostate
+class ChoicePseudostateTransitionConnect(VertexConnect):
+    component.adapts(items.ChoicePseudostateItem, items.TransitionItem)
+
+component.provideAdapter(ChoicePseudostateTransitionConnect)
+
 # vim:sw=4:et:ai

@@ -61,6 +61,7 @@ TOOLBOX_ACTIONS = (
         ('toolbox-initial-pseudostate', _('Initial Pseudostate'), 'gaphor-initial-pseudostate', 'S'),
         ('toolbox-final-state', _('Final State'), 'gaphor-final-state', 'x'),
         ('toolbox-history-pseudostate', _('History Pseudostate'), 'gaphor-history-pseudostate', 'q'),
+        ('toolbox-choice-pseudostate', _('Choice'), 'gaphor-choice-pseudostate', None),
         ('toolbox-transition', _('Transition'), 'gaphor-transition', 'T'),
     )), (_('Use Cases'), (
         ('toolbox-usecase', _('Use case'), 'gaphor-usecase', 'u'),
@@ -410,6 +411,15 @@ class DiagramToolbox(object):
             item.subject.kind = 'shallowHistory'
         return PlacementTool(self.view,
                 item_factory=self._item_factory(items.HistoryPseudostateItem,
+                                                UML.Pseudostate, set_state),
+                handle_index=SE,
+                after_handler=self._after_handler)
+
+    def toolbox_choice_pseudostate(self):
+        def set_state(item):
+            item.subject.kind = 'choice'
+        return PlacementTool(self.view,
+                item_factory=self._item_factory(items.ChoicePseudostateItem,
                                                 UML.Pseudostate, set_state),
                 handle_index=SE,
                 after_handler=self._after_handler)

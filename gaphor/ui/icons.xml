@@ -177,6 +177,10 @@
     <file>pseudostate.png</file>
     <element>Pseudostate</element>
   </icon>
+  <icon id="gaphor-choice-pseudostate">
+    <file>decision-node.png</file>
+    <element>Pseudostate</element>
+  </icon>
   <icon id="gaphor-transition">
     <file>transition.png</file>
     <element>Transition</element>
